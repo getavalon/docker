@@ -14,7 +14,7 @@ For development, here's what needs to happen.
 $ git clone https://github.com/getavalon/docker.git
 $ cd docker
 $ docker build -t avalon/docker:1.0 .
-$ docker run -ti --rm avalon/docker:1.0
+$ docker run -ti --name avalon-docker --rm avalon/docker:1.0
 ...
 ```
 
@@ -35,5 +35,5 @@ $ docker upload avalon/docker:1.0
 Users won't need any of the above, just..
 
 ```bash
-$ docker run -d avalon/docker:1.0
+$ docker run -d --name avalon-docker avalon/docker:1.0
 ```

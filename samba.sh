@@ -2,6 +2,7 @@
 docker run \
 	-ti \
 	--rm \
+	-d \
 	-p 139:139 \
 	-p 445:445 \
 	--name avalon-samba \

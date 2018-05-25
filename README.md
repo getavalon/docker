@@ -18,6 +18,19 @@ $ docker run -ti --name avalon-docker --rm avalon/docker:1.0
 ...
 ```
 
+To access and run Avalon, we will need to expose the files to the network with samba.
+
+```bash
+$ cd docker
+$ sh samba.sh
+```
+
+You can get the IP Address to the shared files with:
+
+```bash
+docker inspect avalon-samba | grep IPAddress
+```
+
 <br>
 
 ### Deployment

@@ -40,9 +40,8 @@ $ docker inspect avalon-mongo | grep IPAddress
 
 To run Avalon you can use following:
 ```bash
-$ cd \\[avalon-samba IP address]\Avalon
 $ set AVALON_MONGO=mongodb://[avalon-mongo IP address]:27017
-$ avalon
+$ \\[avalon-samba IP address]\Avalon\avalon
 ```
 
 

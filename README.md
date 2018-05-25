@@ -11,7 +11,7 @@ Docker distribution, ideal for beginners and studios alike.
 For development, here's what needs to happen.
 
 ```bash
-$ git clone https://github.com/getavalon/docker.git
+$ git clone https://github.com/getavalon/docker.git --recursive
 $ cd docker
 $ docker build -t avalon/docker:1.0 .
 $ docker run -ti --name avalon-docker --rm avalon/docker:1.0

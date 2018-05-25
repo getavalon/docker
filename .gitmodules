@@ -1,0 +1,18 @@
+[submodule "volume/git/mindbender-config"]
+	path = volume/git/mindbender-config
+	url = https://github.com/mindbender-studio/config.git
+[submodule "volume/git/avalon-core"]
+	path = volume/git/avalon-core
+	url = https://github.com/getavalon/core.git
+[submodule "volume/git/avalon-launcher"]
+	path = volume/git/avalon-launcher
+	url = https://github.com/getavalon/launcher.git
+[submodule "volume/git/avalon-examples"]
+	path = volume/git/avalon-examples
+	url = https://github.com/getavalon/examples.git
+[submodule "volume/git/pyblish-base"]
+	path = volume/git/pyblish-base
+	url = https://github.com/pyblish/pyblish-base.git
+[submodule "volume/git/pyblish-qml"]
+	path = volume/git/pyblish-qml
+	url = https://github.com/pyblish/pyblish-qml.git

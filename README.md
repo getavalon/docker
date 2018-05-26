@@ -2,65 +2,34 @@
 
 # docker
 
-Docker distribution, ideal for beginners and studios alike.
+Avalon on [Docker Toolbox](https://docs.docker.com/toolbox/toolbox_install_windows/), ideal for beginners and studios alike.
 
 <br>
 
 ### Usage
 
-For development, here's what needs to happen.
+With Docker available on your system, run the following command.
 
 ```bash
-$ git clone https://github.com/getavalon/docker.git --recursive
-$ cd docker
-$ docker build -t avalon/docker:1.0 .
-$ docker run -ti --name avalon-docker --rm avalon/docker:1.0
-...
-```
-
-To access and run Avalon, we will need to expose the files to the network with Samba and start the Mongo server.
-
-```bash
-$ cd docker
-$ sh samba.sh
-$ sh mongo.sh
-```
-
-You can get the IP address to the shared files with:
-
-```bash
-$ docker inspect avalon-samba | grep IPAddress
-```
-
-Before running the Avalon you'll need to tell where to find the Mongo server. You can find the IP address with:
-
-```bash
-$ docker inspect avalon-mongo | grep IPAddress
-```
-
-To run Avalon you can use following:
-```bash
-$ set AVALON_MONGO=mongodb://[avalon-mongo IP address]:27017
-$ \\[avalon-samba IP address]\Avalon\avalon
-```
-
-
-<br>
-
-### Deployment
-
-Uploads can be made automatically, but a manual start is fine.
-
-```bash
-$ docker upload avalon/docker:1.0
+$ docker run --rm -v $(pwd):/work -w /work appropriate/curl -O https://raw.githubusercontent.com/getavalon/docker/master/docker-compose.yml && docker rm $(docker ps -aq --filter name=getavalon) 2> /dev/null && docker-compose up -d
 ```
 
 <br>
 
-### End-user usage
+### Resources
 
-Users won't need any of the above, just..
+Next we'll mount Avalon's resources to a local drive, such as `A:\` on Windows and `/mnt/avalon` on Linux and OSX.
 
 ```bash
-$ docker run -d --name avalon-docker avalon/docker:1.0
+$ net use a: \\192.168.99.100\avalon
+```
+
+<br>
+
+### Development
+
+Use the overrides to mount your local development directory in place of the deployed version.
+
+```bash
+$ docker-compose -f docker-compose.yml -f docker-compose-dev.yml up
 ```

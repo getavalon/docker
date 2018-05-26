@@ -1,21 +1,20 @@
-avalon:
-  container_name: avalon
+getavalon:
+  container_name: getavalon
   image: getavalon/docker:0.1
 
 mongo:
-  container_name: avalon-mongo
+  container_name: getavalon-mongo
   image: mongo:3.6
   ports:
     - "27017:27017"
 
 # Expose Avalon as a public network share
 samba:
-  container_name: avalon-samba
-  hostname: avalon-samba
+  container_name: getavalon-samba
   image: dperson/samba
   ports:
     - "139:139"
     - "445:445"
   volumes_from:
-    - avalon
+    - getavalon
   command: -s "avalon;/avalon;yes;no;yes;all;none;all" -u "myuser;mypass"

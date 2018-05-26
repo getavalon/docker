@@ -1,0 +1,3 @@
+samba:
+  volumes:
+    - ./volume:/avalon

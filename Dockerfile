@@ -83,4 +83,4 @@ COPY volume /avalon
 
 ENTRYPOINT \
     /usr/sbin/smbd -D && \
-    /usr/bin/mongod
+    /usr/bin/mongod --bind_ip_all

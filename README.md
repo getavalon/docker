@@ -2,38 +2,34 @@
 
 # docker
 
-Docker distribution, ideal for beginners and studios alike.
+Avalon on [Docker Toolbox](https://docs.docker.com/toolbox/toolbox_install_windows/), ideal for beginners and studios alike.
 
 <br>
 
 ### Usage
 
-For development, here's what needs to happen.
+With Docker available on your system, run the following command.
 
 ```bash
-$ git clone https://github.com/getavalon/docker.git
-$ cd docker
-$ docker build -t avalon/docker:1.0 .
-$ docker run -ti --rm avalon/docker:1.0
-...
+$ docker run --rm -v $(pwd):/work -w /work appropriate/curl -O https://raw.githubusercontent.com/getavalon/docker/master/docker-compose.yml && docker rm $(docker ps -aq --filter name=getavalon) 2> /dev/null && docker-compose up -d
 ```
 
 <br>
 
-### Deployment
+### Resources
 
-Uploads can be made automatically, but a manual start is fine.
+Next we'll mount Avalon's resources to a local drive, such as `A:\` on Windows and `/mnt/avalon` on Linux and OSX.
 
 ```bash
-$ docker upload avalon/docker:1.0
+$ net use a: \\192.168.99.100\avalon
 ```
 
 <br>
 
-### End-user usage
+### Development
 
-Users won't need any of the above, just..
+Use the overrides to mount your local development directory in place of the deployed version.
 
 ```bash
-$ docker run -d avalon/docker:1.0
+$ docker-compose -f docker-compose.yml -f docker-compose-dev.yml up
 ```

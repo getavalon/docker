@@ -28,8 +28,13 @@ $ net use a: \\192.168.99.100\avalon
 
 ### Development
 
-Use the overrides to mount your local development directory in place of the deployed version.
+For development [Git](https://git-scm.com/) is required.
 
 ```bash
-$ docker-compose -f docker-compose.yml -f docker-compose-dev.yml up
+$ git clone https://github.com/getavalon/docker.git --recursive
+$ cd docker
+$ docker build . -t avalon/latest
+$ docker run -ti --rm -p 27017:27017 -p 445:445 -p 139:139 avalon/latest
 ```
+
+Once the Docker container is running, you now have a Mongo database running. This means you can modify the code in the ```docker``` repository without restart or rebuilding the container.

@@ -9,7 +9,7 @@ RUN apt-get update && \
         samba \
         apt-transport-https
 
-RUN useradd -c 'Samba User' -m -s /bin/bash smbuser && \
+RUN useradd -c 'Avalon User' -m -s /bin/bash avalon && \
     file="/etc/samba/smb.conf" && \
     sed -i 's|^;* *\(log file = \).*|   \1/dev/stdout|' $file && \
     sed -i 's|^;* *\(load printers = \).*|   \1no|' $file && \
@@ -27,7 +27,7 @@ RUN useradd -c 'Samba User' -m -s /bin/bash smbuser && \
     echo '   force create mode = 0664' >>$file && \
     echo '   directory mask = 0775' >>$file && \
     echo '   force directory mode = 0775' >>$file && \
-    echo '   force user = smbuser' >>$file && \
+    echo '   force user = avalon' >>$file && \
     echo '   force group = users' >>$file && \
     echo '   follow symlinks = yes' >>$file && \
     echo '   load printers = no' >>$file && \
@@ -39,6 +39,7 @@ RUN useradd -c 'Samba User' -m -s /bin/bash smbuser && \
     echo '   vfs objects = recycle' >>$file && \
     echo '   recycle:keeptree = yes' >>$file && \
     echo '   recycle:versions = yes' >>$file && \
+    echo '   min protocol = SMB2' >>$file && \
     echo '   [avalon]' >>$file && \
     echo '      path = /avalon' >>$file && \
     echo '      browsable = yes' >>$file && \
@@ -81,6 +82,10 @@ VOLUME /avalon
 
 COPY volume /avalon
 
+# Edit via e.g. docker run -e password=mypass getavalon:0.2
+ENV password=default
+
 ENTRYPOINT \
+    bash -c 'echo -e "$password\n$password" | /usr/bin/smbpasswd -s -a "avalon"' && \
     /usr/sbin/smbd -D && \
     /usr/bin/mongod --bind_ip_all

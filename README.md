@@ -2,7 +2,7 @@
 
 # docker
 
-Avalon on [Docker Toolbox](https://docs.docker.com/toolbox/toolbox_install_windows/), ideal for beginners and studios alike.
+Avalon on [Docker Toolbox](https://github.com/docker/toolbox#installation-and-documentation), ideal for beginners and studios alike.
 
 <br>
 

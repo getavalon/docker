@@ -44,15 +44,6 @@ import platform
 import contextlib
 import subprocess
 
-# Having avalon.py in the current working directory
-# exposes it to Python's import mechanism which conflicts
-# with the actual avalon Python package.
-if os.path.basename(__file__) in os.listdir(os.getcwd()):
-    sys.stderr.write("Error: Please change your current "
-                     "working directory\n%s\n" % os.getcwd())
-    sys.exit(1)
-
-
 REPO_DIR = os.path.dirname(os.path.abspath(__file__))
 AVALON_DEBUG = bool(os.getenv("AVALON_DEBUG"))
 

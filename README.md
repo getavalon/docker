@@ -1,32 +1,52 @@
 ### WARNING: IN PROGRESS, DO NOT USE
 
-# docker
+### Avalon on Docker
 
-Avalon on [Docker Toolbox](https://github.com/docker/toolbox#installation-and-documentation), ideal for beginners and studios alike.
+Avalon on Docker, ideal for beginners and studios alike.
 
-<br>
-
-### Usage
-
-With Docker available on your system, run the following command.
-
-```bash
-$ docker run --rm -v $(pwd):/work -w /work appropriate/curl -O https://raw.githubusercontent.com/getavalon/docker/master/docker-compose.yml && docker rm $(docker ps -aq --filter name=getavalon) 2> /dev/null && docker-compose up -d
-```
+> NOTE: This currently *only* works on [Docker Toolbox](https://github.com/docker/toolbox#installation-and-documentation), *not* Docker for Windows
 
 <br>
 
-### Resources
+### Usage on Windows
 
-Next we'll mount Avalon's resources to a local drive, such as `A:\` on Windows and `/mnt/avalon` on Linux and OSX.
+With Docker available on your system, run the following commands to start Avalon and expose resources on `A:\`.
 
 ```bash
-$ net use a: \\192.168.99.100\avalon
+$ docker run --rm -p 445:445 -p 27017:27017 getavalon/docker:0.2
 ```
+
+<details>
+ <summary>Trouble?</summary>
+  <br>
+  <ul>
+    <li>On Windows and OSX, find your IP via <code>docker-machine ip</code></li>
+    <li>On Linux, exclude mapping of ports to the host and access the container IP directly</li>
+  </ul>
+</details>
+
+<br>
+
+Next, from `cmd.exe` run the following to map Avalon files to a drive, such as `A:\`
+
+```bash
+$ net use /delete a:
+$ net use a: \\192.168.99.100\avalon /user:avalon default
+```
+
+<details>
+ <summary>Trouble?</summary>
+  <br>
+  <ul>
+    <li>If you encounter <code>The network name cannot be found</code> ensure you run the above in <code>cmd.exe</code> and not <code>Docker Quickstart, bash</code> or <code>MSYS2</code> etc.</li>
+  </ul>
+</details>
 
 <br>
 
 ### Development
+
+This repository contains all of Avalon as Git submodules. To extend Avalon, you typically edit each repository individually, and then point the submodules in this repository to your latest change.
 
 ```bash
 $ git clone https://github.com/getavalon/docker.git --recursive

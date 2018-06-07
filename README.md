@@ -44,6 +44,8 @@ $ net use a: \\192.168.99.100\avalon /user:avalon default
 
 <br>
 
+A ```terminal``` executable is provided to quickly get setup with in an environment where the ```avalon``` executable is available.
+
 ### Development
 
 This repository contains all of Avalon as Git submodules. To extend Avalon, you typically edit each repository individually, and then point the submodules in this repository to your latest change.

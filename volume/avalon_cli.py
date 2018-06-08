@@ -241,6 +241,9 @@ def main():
     parser.add_argument("--publish", action="store_true",
                         help="Publish from current working directory, "
                              "or supplied --root")
+    parser.add_argument(
+        "--manager", action="store_true", help="Launch Project Manager"
+    )
 
     kwargs, args = parser.parse_known_args()
 
@@ -310,6 +313,11 @@ def main():
             returncode = forward([
                 sys.executable, "-u", "-m", "pyblish", "gui"
             ] + args, silent=True)
+
+    elif kwargs.manager:
+        returncode = forward(
+            [sys.executable, "-u", "-m", "avalon.tools.projectmanager"] + args
+        )
 
     else:
         root = os.environ["AVALON_PROJECTS"]

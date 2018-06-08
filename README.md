@@ -13,7 +13,7 @@ Avalon on Docker, ideal for beginners and studios alike.
 With Docker available on your system, run the following commands to start Avalon and expose resources on `A:\`.
 
 ```bash
-$ docker run --rm -p 445:445 -p 27017:27017 getavalon/docker:0.2
+$ docker run --name avalon -v avalon-db:/data/db --rm -p 445:445 -p 27017:27017 getavalon/docker:0.2
 ```
 
 <details>
@@ -54,7 +54,17 @@ This repository contains all of Avalon as Git submodules. To extend Avalon, you 
 $ git clone https://github.com/getavalon/docker.git --recursive
 $ cd docker
 $ docker build . -t getavalon/docker
-$ docker run -ti --rm -p 27017:27017 -p 445:445 -p 139:139 getavalon/docker
+$ docker run -ti --name avalon -v avalon-db:/data/db --rm -p 27017:27017 -p 445:445 -p 139:139 getavalon/docker
 ```
 
 Once the Docker container is running, you now have a Mongo database running. This means you can modify the code in the ```docker``` repository without restart or rebuilding the container.
+
+## Persistent Database
+
+The docker commands for running Avalon so far has been persisting the database to a [Docker volume](https://docs.docker.com/storage/volumes/) called ```avalon-db```.
+
+When developing it can be useful to start from a new database. All you need to do is remove ```-v avalon-db:/data/db```.
+
+```bash
+$ docker run -ti --name avalon --rm -p 27017:27017 -p 445:445 -p 139:139 getavalon/docker
+```

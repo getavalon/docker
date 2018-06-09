@@ -43,6 +43,12 @@ import tempfile
 import platform
 import contextlib
 import subprocess
+import json
+import time
+import datetime
+
+import pymongo
+from bson import json_util
 
 REPO_DIR = os.path.dirname(os.path.abspath(__file__))
 AVALON_DEBUG = bool(os.getenv("AVALON_DEBUG"))
@@ -214,6 +220,62 @@ def update(cd):
     print("All done")
 
 
+def backup(directory):
+    """Outputs a JSON serialized file of the data in all the projects.
+
+    Arguments:
+        directory (str): The output directory to write backup data to.
+
+    """
+
+    client = pymongo.MongoClient(os.environ["AVALON_MONGO"])
+    db = client["avalon"]
+
+    for name in db.collection_names():
+        filename = "{0}_{1}.json".format(
+            name,
+            datetime.datetime.fromtimestamp(time.time()).strftime(
+                "%Y%m%d%H%M%S"
+            )
+        )
+
+        with open(os.path.join(directory, filename), "w") as f:
+            project_data = db[name].find()
+            for data in json.loads(json_util.dumps(project_data)):
+                f.write(json.dumps(data) + "\n")
+
+
+def restore(path):
+    """Restores data from backups.
+
+    Arguments:
+        path (str): Path to either a json file or directory of files.
+
+    """
+    files = []
+
+    if os.path.isdir(path):
+        for f in os.listdir(path):
+            files.append(os.path.join(path, f))
+    else:
+        files.append(path)
+
+    for f in files:
+        project_data = []
+        project_name = ""
+        with open(f) as data_file:
+            for line in data_file:
+                data = json_util.loads(line)
+                if "type" in data and data["type"] == "project":
+                    project_name = data["name"]
+                project_data.append(data)
+
+        client = pymongo.MongoClient(os.environ["AVALON_MONGO"])
+        db = client["avalon"]
+        project = db[project_name]
+        project.insert_many(project_data).inserted_ids
+
+
 def main():
     import argparse
 
@@ -241,6 +303,14 @@ def main():
     parser.add_argument("--publish", action="store_true",
                         help="Publish from current working directory, "
                              "or supplied --root")
+    parser.add_argument(
+        "--backup",
+        help="Backs up all projects in the database, to supplied path."
+    )
+    parser.add_argument(
+        "--restore",
+        help="Restore a project or a folder or projects."
+    )
 
     kwargs, args = parser.parse_known_args()
 
@@ -310,6 +380,20 @@ def main():
             returncode = forward([
                 sys.executable, "-u", "-m", "pyblish", "gui"
             ] + args, silent=True)
+
+    elif kwargs.backup:
+        returncode = 0
+        try:
+            backup(kwargs.backup)
+        except Exception:
+            raise
+
+    elif kwargs.restore:
+        returncode = 0
+        try:
+            restore(kwargs.restore)
+        except Exception:
+            raise
 
     else:
         root = os.environ["AVALON_PROJECTS"]

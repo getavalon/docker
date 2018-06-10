@@ -170,5 +170,5 @@ ENV password=default
 ENTRYPOINT \
     bash -c 'echo -e "$password\n$password" | /usr/bin/smbpasswd -s -a "avalon"' && \
     /usr/sbin/smbd -D && \
-    /opt/zou/start_zou.sh && \
-    /usr/bin/mongod --bind_ip_all
+    /usr/bin/mongod --bind_ip_all --fork --logpath=/avalon/mongo.log && \
+    /opt/zou/start_zou.sh

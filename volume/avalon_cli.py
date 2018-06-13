@@ -393,16 +393,14 @@ def main():
 
     elif kwargs.backup:
         returncode = 0
-        try:
-            backup()
-        except Exception:
-            raise
+        backup()
 
     elif kwargs.restore:
         returncode = 0
         try:
             restore(kwargs.restore)
         except Exception:
+            returncode = 1
             raise
 
     else:

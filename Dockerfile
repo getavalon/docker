@@ -143,12 +143,24 @@ RUN pip install supervisor
 ADD supervisord.conf /etc/supervisord.conf
 
 ENV DB_USERNAME=root DB_HOST=
-COPY ./init_zou.sh /opt/zou/
-COPY ./start_zou.sh /opt/zou/
-RUN chmod +x /opt/zou/init_zou.sh /opt/zou/start_zou.sh
-
 RUN echo Initialising Zou... && \
-    /opt/zou/init_zou.sh
+    export LC_ALL=C.UTF-8 && \
+    export LANG=C.UTF-8 && \
+    service postgresql start && \
+    service redis-server start && \
+    . /opt/zou/env/bin/activate && \
+    zou upgrade_db && \
+    zou init_data && \
+#    zou create_admin admin@example.com && \
+    service postgresql stop && \
+    service redis-server stop
+
+RUN echo "#!/bin/bash" > /opt/zou/start_zou.sh
+RUN echo ". /usr/share/postgresql-common/init.d-functions" >> /opt/zou/start_zou.sh
+RUN echo "create_socket_directory" >> /opt/zou/start_zou.sh
+RUN echo "echo Running Zou..." >> /opt/zou/start_zou.sh
+RUN echo "supervisord -c /etc/supervisord.conf" >> /opt/zou/start_zou.sh
+RUN chmod +x /opt/zou/start_zou.sh
 
 # Mongo
 EXPOSE 27017

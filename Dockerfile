@@ -119,7 +119,7 @@ RUN service postgresql start && \
 USER root
 
 # Wait for the startup or shutdown to complete
-COPY pg_ctl.conf /etc/postgresql/9.5/main/pg_ctl.conf
+RUN printf "pg_ctl_options = '-w'" > /etc/postgresql/9.5/main/pg_ctl.conf
 RUN chmod 0644 /etc/postgresql/9.5/main/pg_ctl.conf && chown postgres:postgres /etc/postgresql/9.5/main/pg_ctl.conf
 
 

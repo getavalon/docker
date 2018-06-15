@@ -155,13 +155,6 @@ RUN echo Initialising Zou... && \
     service postgresql stop && \
     service redis-server stop
 
-RUN echo "#!/bin/bash" > /opt/zou/start_zou.sh
-RUN echo ". /usr/share/postgresql-common/init.d-functions" >> /opt/zou/start_zou.sh
-RUN echo "create_socket_directory" >> /opt/zou/start_zou.sh
-RUN echo "echo Running Zou..." >> /opt/zou/start_zou.sh
-RUN echo "supervisord -c /etc/supervisord.conf" >> /opt/zou/start_zou.sh
-RUN chmod +x /opt/zou/start_zou.sh
-
 # Mongo
 EXPOSE 27017
 
@@ -181,4 +174,6 @@ ENV password=default
 
 ENTRYPOINT \
     bash -c 'echo -e "$password\n$password" | /usr/bin/smbpasswd -s -a "avalon"' && \
-    /opt/zou/start_zou.sh
+    . /usr/share/postgresql-common/init.d-functions && \
+    create_socket_directory && \
+    supervisord -c /etc/supervisord.conf

@@ -122,9 +122,17 @@ USER root
 RUN printf "pg_ctl_options = '-w'" > /etc/postgresql/9.5/main/pg_ctl.conf
 RUN chmod 0644 /etc/postgresql/9.5/main/pg_ctl.conf && chown postgres:postgres /etc/postgresql/9.5/main/pg_ctl.conf
 
+RUN mkdir -p /etc/zou
+RUN echo "accesslog = \"/var/log/zou/gunicorn_access.log\"" > /etc/zou/gunicorn.conf
+RUN echo "errorlog = \"/var/log/zou/gunicorn_error.log\"" >> /etc/zou/gunicorn.conf
+RUN echo "workers = 3" >> /etc/zou/gunicorn.conf
+RUN echo "worker_class = \"gevent\"" >> /etc/zou/gunicorn.conf
+RUN echo "timeout = 600" >> /etc/zou/gunicorn.conf
 
-COPY ./gunicorn /etc/zou/gunicorn.conf
-COPY ./gunicorn-events /etc/zou/gunicorn-events.conf
+RUN echo "accesslog = \"/var/log/zou/gunicorn_events_access.log\"" > /etc/zou/gunicorn-events.conf
+RUN echo "errorlog = \"/var/log/zou/gunicorn_events_error.log\"" >> /etc/zou/gunicorn-events.conf
+RUN echo "workers = 1" >> /etc/zou/gunicorn-events.conf
+RUN echo "worker_class = \"geventwebsocket.gunicorn.workers.GeventWebSocketWorker\"" >> /etc/zou/gunicorn-events.conf
 
 COPY ./nginx.conf /etc/nginx/sites-available/zou
 RUN ln -s /etc/nginx/sites-available/zou /etc/nginx/sites-enabled/

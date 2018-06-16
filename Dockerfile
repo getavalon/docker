@@ -67,14 +67,18 @@ RUN groupadd -r mongodb && useradd -r -g mongodb mongodb && \
         mongodb-org-server=3.6.4 \
         mongodb-org-shell=3.6.4 \
         mongodb-org-mongos=3.6.4 \
-        mongodb-org-tools=3.6.4
-
-RUN mkdir -p /data/db /data/configdb && \
+        mongodb-org-tools=3.6.4 && \
+    mkdir -p /data/db /data/configdb && \
 	chown -R mongodb:mongodb /data/db /data/configdb
 
 #
 # Setup CGWire
 #
+
+WORKDIR /opt/zou
+
+COPY ./nginx.conf /etc/nginx/sites-available/zou
+COPY ./supervisord.conf /etc/supervisord.conf
 
 RUN apt-get update && apt-get install --no-install-recommends -y \
     bzip2 \
@@ -92,55 +96,53 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     python3-wheel \
     redis-server && \
     apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
-RUN mkdir -p /opt/zou /var/log/zou /opt/zou/thumbnails
-
-RUN git clone -b 0.6.6-build --single-branch --depth 1 https://github.com/cgwire/kitsu.git /opt/zou/kitsu
-
-# setup.py will read requirements.txt in the current directory
+    rm -rf /var/lib/apt/lists/* && \
+    git clone \
+        -b 0.6.6-build \
+        --single-branch \
+        --depth 1 \
+        https://github.com/cgwire/kitsu.git /opt/zou/kitsu
+        
 WORKDIR /opt/zou/zou
-RUN python3 -m venv /opt/zou/env && \
+RUN mkdir -p /opt/zou /var/log/zou /opt/zou/thumbnails && \
     # Python 2 needed for supervisord
+    pip install supervisor && \
+    python3 -m venv /opt/zou/env && \
     /opt/zou/env/bin/pip install --upgrade pip setuptools wheel && \
     /opt/zou/env/bin/pip install zou==0.6.4 && \
     rm -rf /root/.cache/pip/
 
-WORKDIR /opt/zou
-
 # Create database
 USER postgres
-
 RUN service postgresql start && \
     createuser root && createdb -T template0 -E UTF8 --owner root root && \
     createdb -T template0 -E UTF8 --owner root zoudb && \
     service postgresql stop
-
 USER root
 
 # Wait for the startup or shutdown to complete
-RUN printf "pg_ctl_options = '-w'" > /etc/postgresql/9.5/main/pg_ctl.conf
-RUN chmod 0644 /etc/postgresql/9.5/main/pg_ctl.conf && chown postgres:postgres /etc/postgresql/9.5/main/pg_ctl.conf
-
-RUN mkdir -p /etc/zou
-RUN echo "accesslog = \"/var/log/zou/gunicorn_access.log\"" > /etc/zou/gunicorn.conf
-RUN echo "errorlog = \"/var/log/zou/gunicorn_error.log\"" >> /etc/zou/gunicorn.conf
-RUN echo "workers = 3" >> /etc/zou/gunicorn.conf
-RUN echo "worker_class = \"gevent\"" >> /etc/zou/gunicorn.conf
-RUN echo "timeout = 600" >> /etc/zou/gunicorn.conf
-
-RUN echo "accesslog = \"/var/log/zou/gunicorn_events_access.log\"" > /etc/zou/gunicorn-events.conf
-RUN echo "errorlog = \"/var/log/zou/gunicorn_events_error.log\"" >> /etc/zou/gunicorn-events.conf
-RUN echo "workers = 1" >> /etc/zou/gunicorn-events.conf
-RUN echo "worker_class = \"geventwebsocket.gunicorn.workers.GeventWebSocketWorker\"" >> /etc/zou/gunicorn-events.conf
-
-COPY ./nginx.conf /etc/nginx/sites-available/zou
-RUN ln -s /etc/nginx/sites-available/zou /etc/nginx/sites-enabled/
-RUN rm /etc/nginx/sites-enabled/default
-
-# supervisor will manage services
-RUN pip install supervisor
-ADD supervisord.conf /etc/supervisord.conf
+RUN printf "pg_ctl_options = '-w'" > /etc/postgresql/9.5/main/pg_ctl.conf && \
+    chmod 0644 /etc/postgresql/9.5/main/pg_ctl.conf && \
+    chown postgres:postgres /etc/postgresql/9.5/main/pg_ctl.conf && \
+    mkdir -p /etc/zou && \
+    #
+    # Gunicorn
+    file="/etc/zou/gunicorn.conf" && \
+    echo "accesslog = \"/var/log/zou/gunicorn_access.log\"" > $file && \
+    echo "errorlog = \"/var/log/zou/gunicorn_error.log\"" >> $file && \
+    echo "workers = 3" >> $file && \
+    echo "worker_class = \"gevent\"" >> $file && \
+    echo "timeout = 600" >> $file && \
+    #
+    # Gunicorn Events
+    file="/etc/zou/gunicorn-events.conf" && \
+    echo "accesslog = \"/var/log/zou/gunicorn_events_access.log\"" > $file && \
+    echo "errorlog = \"/var/log/zou/gunicorn_events_error.log\"" >> $file && \
+    echo "workers = 1" >> $file && \
+    echo "worker_class = \"geventwebsocket.gunicorn.workers.GeventWebSocketWorker\"" >> $file && \
+    #
+    ln -s /etc/nginx/sites-available/zou /etc/nginx/sites-enabled/ && \
+    rm /etc/nginx/sites-enabled/default
 
 ENV DB_USERNAME=root DB_HOST=
 RUN echo Initialising Zou... && \

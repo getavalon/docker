@@ -1,11 +1,12 @@
-FROM ubuntu:trusty
+FROM ubuntu:16.04
 
 #
 # Setup Samba
 #
 
 RUN apt-get update && \
-    apt-get install -y --force-yes \
+    apt-get install -y \
+        sudo \
         samba \
         apt-transport-https
 
@@ -66,10 +67,95 @@ RUN groupadd -r mongodb && useradd -r -g mongodb mongodb && \
         mongodb-org-server=3.6.4 \
         mongodb-org-shell=3.6.4 \
         mongodb-org-mongos=3.6.4 \
-        mongodb-org-tools=3.6.4
-
-RUN mkdir -p /data/db /data/configdb && \
+        mongodb-org-tools=3.6.4 && \
+    mkdir -p /data/db /data/configdb && \
 	chown -R mongodb:mongodb /data/db /data/configdb
+
+#
+# Setup CGWire
+#
+
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    bzip2 \
+    ffmpeg \
+    git \
+    nginx \
+    postgresql \
+    postgresql-client \
+    python-pip \
+    python-setuptools \
+    python3 \
+    python3-pip \
+    python3-setuptools \
+    python3-venv \
+    python3-wheel \
+    redis-server && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* && \
+    git clone \
+        -b 0.6.6-build \
+        --single-branch \
+        --depth 1 \
+        https://github.com/cgwire/kitsu.git /opt/zou/kitsu
+        
+WORKDIR /opt/zou/zou
+RUN mkdir -p /opt/zou /var/log/zou /opt/zou/thumbnails && \
+    # Python 2 needed for supervisord
+    pip install supervisor && \
+    python3 -m venv /opt/zou/env && \
+    /opt/zou/env/bin/pip install --upgrade pip setuptools wheel && \
+    /opt/zou/env/bin/pip install zou==0.6.4 && \
+    rm -rf /root/.cache/pip/
+
+# Create database
+USER postgres
+RUN service postgresql start && \
+    createuser root && createdb -T template0 -E UTF8 --owner root root && \
+    createdb -T template0 -E UTF8 --owner root zoudb && \
+    service postgresql stop
+USER root
+
+# Wait for the startup or shutdown to complete
+RUN printf "pg_ctl_options = '-w'" > /etc/postgresql/9.5/main/pg_ctl.conf && \
+    chmod 0644 /etc/postgresql/9.5/main/pg_ctl.conf && \
+    chown postgres:postgres /etc/postgresql/9.5/main/pg_ctl.conf && \
+    mkdir -p /etc/zou && \
+    #
+    # Gunicorn
+    file="/etc/zou/gunicorn.conf" && \
+    echo "accesslog = \"/var/log/zou/gunicorn_access.log\"" > $file && \
+    echo "errorlog = \"/var/log/zou/gunicorn_error.log\"" >> $file && \
+    echo "workers = 3" >> $file && \
+    echo "worker_class = \"gevent\"" >> $file && \
+    echo "timeout = 600" >> $file && \
+    #
+    # Gunicorn Events
+    file="/etc/zou/gunicorn-events.conf" && \
+    echo "accesslog = \"/var/log/zou/gunicorn_events_access.log\"" > $file && \
+    echo "errorlog = \"/var/log/zou/gunicorn_events_error.log\"" >> $file && \
+    echo "workers = 1" >> $file && \
+    echo "worker_class = \"geventwebsocket.gunicorn.workers.GeventWebSocketWorker\"" >> $file && \
+    #
+    ln -s /etc/nginx/sites-available/zou /etc/nginx/sites-enabled/ && \
+    rm /etc/nginx/sites-enabled/default
+
+# Edit via e.g. docker run -e AVALON_EMAIL=me@email.com -e AVALON_PASSWORD=mypass getavalon:0.2
+ENV AVALON_USERNAME=avalon
+ENV AVALON_EMAIL=admin@getavalon.github.io
+ENV AVALON_PASSWORD=default
+
+ENV DB_USERNAME=root DB_HOST=
+RUN echo Initialising Zou... && \
+    export LC_ALL=C.UTF-8 && \
+    export LANG=C.UTF-8 && \
+    service postgresql start && \
+    service redis-server start && \
+    . /opt/zou/env/bin/activate && \
+    zou upgrade_db && \
+    zou init_data && \
+    zou create_admin $AVALON_EMAIL && \
+    service postgresql stop && \
+    service redis-server stop
 
 # Mongo
 EXPOSE 27017
@@ -77,15 +163,20 @@ EXPOSE 27017
 # Samba
 EXPOSE 137/udp 138/udp 139 445
 
+# CGWire
+EXPOSE 80
+
 VOLUME /data/db /data/configdb
 VOLUME /avalon
 
+# Copy files last, so as to reuse the above cache on updating them
+COPY ./nginx.conf /etc/nginx/sites-available/zou
+COPY ./supervisord.conf /etc/supervisord.conf
+
 COPY volume /avalon
 
-# Edit via e.g. docker run -e password=mypass getavalon:0.2
-ENV password=default
-
 ENTRYPOINT \
-    bash -c 'echo -e "$password\n$password" | /usr/bin/smbpasswd -s -a "avalon"' && \
-    /usr/sbin/smbd -D && \
-    /usr/bin/mongod --bind_ip_all
+    bash -c 'echo -e "$AVALON_PASSWORD\n$AVALON_PASSWORD" | /usr/bin/smbpasswd -s -a "$AVALON_USERNAME"' && \
+    . /usr/share/postgresql-common/init.d-functions && \
+    create_socket_directory && \
+    supervisord -c /etc/supervisord.conf

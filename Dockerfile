@@ -139,6 +139,11 @@ RUN printf "pg_ctl_options = '-w'" > /etc/postgresql/9.5/main/pg_ctl.conf && \
     ln -s /etc/nginx/sites-available/zou /etc/nginx/sites-enabled/ && \
     rm /etc/nginx/sites-enabled/default
 
+# Edit via e.g. docker run -e AVALON_EMAIL=me@email.com -e AVALON_PASSWORD=mypass getavalon:0.2
+ENV AVALON_USERNAME=avalon
+ENV AVALON_EMAIL=admin@getavalon.github.io
+ENV AVALON_PASSWORD=default
+
 ENV DB_USERNAME=root DB_HOST=
 RUN echo Initialising Zou... && \
     export LC_ALL=C.UTF-8 && \
@@ -148,7 +153,7 @@ RUN echo Initialising Zou... && \
     . /opt/zou/env/bin/activate && \
     zou upgrade_db && \
     zou init_data && \
-#    zou create_admin admin@example.com && \
+    zou create_admin $AVALON_EMAIL && \
     service postgresql stop && \
     service redis-server stop
 
@@ -165,16 +170,13 @@ VOLUME /data/db /data/configdb
 VOLUME /avalon
 
 # Copy files last, so as to reuse the above cache on updating them
-ADD nginx.conf /etc/nginx/sites-available/zou
-ADD supervisord.conf /etc/supervisord.conf
+COPY ./nginx.conf /etc/nginx/sites-available/zou
+COPY ./supervisord.conf /etc/supervisord.conf
 
 COPY volume /avalon
 
-# Edit via e.g. docker run -e password=mypass getavalon:0.2
-ENV password=default
-
 ENTRYPOINT \
-    bash -c 'echo -e "$password\n$password" | /usr/bin/smbpasswd -s -a "avalon"' && \
+    bash -c 'echo -e "$AVALON_PASSWORD\n$AVALON_PASSWORD" | /usr/bin/smbpasswd -s -a "$AVALON_USERNAME"' && \
     . /usr/share/postgresql-common/init.d-functions && \
     create_socket_directory && \
     supervisord -c /etc/supervisord.conf

@@ -5,7 +5,7 @@ FROM ubuntu:16.04
 #
 
 RUN apt-get update && \
-    apt-get install -y --force-yes \
+    apt-get install -y \
         sudo \
         samba \
         apt-transport-https
@@ -74,11 +74,6 @@ RUN groupadd -r mongodb && useradd -r -g mongodb mongodb && \
 #
 # Setup CGWire
 #
-
-WORKDIR /opt/zou
-
-COPY ./nginx.conf /etc/nginx/sites-available/zou
-COPY ./supervisord.conf /etc/supervisord.conf
 
 RUN apt-get update && apt-get install --no-install-recommends -y \
     bzip2 \
@@ -168,6 +163,10 @@ EXPOSE 80
 
 VOLUME /data/db /data/configdb
 VOLUME /avalon
+
+# Copy files last, so as to reuse the above cache on updating them
+ADD nginx.conf /etc/nginx/sites-available/zou
+ADD supervisord.conf /etc/supervisord.conf
 
 COPY volume /avalon
 

@@ -1,21 +1,11 @@
 import os
 import subprocess
 
+import pymongo
+
 
 def test_backup_restore():
     """Backup and restore works"""
-
-    subprocess.call(
-        [
-            "docker", "run", "-d", "--rm",
-            "--name", "avalon",
-            "-p", "27017:27017",
-            "-p", "445:445",
-            "-p", "139:139",
-            "getavalon/docker"
-        ],
-        shell=True
-    )
 
     # Populate database
     subprocess.call(["avalon", "--import", "batman"], shell=True)
@@ -30,21 +20,11 @@ def test_backup_restore():
         if f.endswith(".zip"):
             backup_path = os.path.join(os.getcwd(), f)
 
-    # Restore
-    subprocess.call(["docker", "kill", "avalon"], shell=True)
+    # Wipe database
+    client = pymongo.MongoClient(os.environ["AVALON_MONGO"])
+    client.drop_database("avalon")
 
-    subprocess.call(
-        [
-            "docker", "run", "-d", "--rm",
-            "--name", "avalon",
-            "-p", "27017:27017",
-            "-p", "445:445",
-            "-p", "139:139",
-            "getavalon/docker"
-        ],
-        shell=True
-    )
-
+    # Restore database
     result = subprocess.call(["avalon", "--restore", backup_path], shell=True)
     assert result == 0
 

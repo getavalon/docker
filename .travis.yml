@@ -6,4 +6,5 @@ python:
   - "3.6"
 install:
   - pip install nose
+  - pip install pymongo
 script: python run_tests.py

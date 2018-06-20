@@ -4,11 +4,13 @@ import subprocess
 import pytest
 
 
+root = os.path.abspath(os.path.join(__file__, ".."))
+
 # Setup environment for executable
-os.environ["PATH"] += os.path.abspath(os.path.join(__file__, "..", "volume"))
+os.environ["PATH"] += os.pathsep + os.path.join(root, "volume")
 
 # Build docker file
-subprocess.call(["docker", "build", ".", "-t", "getavalon/docker"])
+subprocess.call(["docker", "build", ".", "-t", "getavalon/docker"], cwd=root)
 
 # Run tests
 pytest.main(

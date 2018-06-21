@@ -93,18 +93,18 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* && \
     git clone \
-        -b 0.6.6-build \
+        -b 0.6.8-build \
         --single-branch \
         --depth 1 \
         https://github.com/cgwire/kitsu.git /opt/zou/kitsu
-        
+
 WORKDIR /opt/zou/zou
 RUN mkdir -p /opt/zou /var/log/zou /opt/zou/thumbnails && \
     # Python 2 needed for supervisord
     pip install supervisor && \
     python3 -m venv /opt/zou/env && \
     /opt/zou/env/bin/pip install --upgrade pip setuptools wheel && \
-    /opt/zou/env/bin/pip install zou==0.6.4 && \
+    /opt/zou/env/bin/pip install zou==0.6.10 && \
     rm -rf /root/.cache/pip/
 
 # Create database
@@ -139,11 +139,6 @@ RUN printf "pg_ctl_options = '-w'" > /etc/postgresql/9.5/main/pg_ctl.conf && \
     ln -s /etc/nginx/sites-available/zou /etc/nginx/sites-enabled/ && \
     rm /etc/nginx/sites-enabled/default
 
-# Edit via e.g. docker run -e AVALON_EMAIL=me@email.com -e AVALON_PASSWORD=mypass getavalon:0.2
-ENV AVALON_USERNAME=avalon
-ENV AVALON_EMAIL=admin@getavalon.github.io
-ENV AVALON_PASSWORD=default
-
 ENV DB_USERNAME=root DB_HOST=
 RUN echo Initialising Zou... && \
     export LC_ALL=C.UTF-8 && \
@@ -153,7 +148,7 @@ RUN echo Initialising Zou... && \
     . /opt/zou/env/bin/activate && \
     zou upgrade_db && \
     zou init_data && \
-    zou create_admin $AVALON_EMAIL && \
+    zou create_admin admin@example.com && \
     service postgresql stop && \
     service redis-server stop
 
@@ -174,6 +169,10 @@ COPY ./nginx.conf /etc/nginx/sites-available/zou
 COPY ./supervisord.conf /etc/supervisord.conf
 
 COPY volume /avalon
+
+# Edit via e.g. docker run -e AVALON_PASSWORD=mypass getavalon:0.2
+ENV AVALON_USERNAME=avalon
+ENV AVALON_PASSWORD=default
 
 ENTRYPOINT \
     bash -c 'echo -e "$AVALON_PASSWORD\n$AVALON_PASSWORD" | /usr/bin/smbpasswd -s -a "$AVALON_USERNAME"' && \

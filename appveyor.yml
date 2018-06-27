@@ -8,6 +8,10 @@ environment:
       PYTHON_VERSION: "3.6.x"
       PYTHON_ARCH: "64"
 
+install:
+  - SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%
+  - pip install nose
+
 build: off
 
 test_script:

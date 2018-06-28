@@ -1,3 +1,8 @@
+language: python
+
+python:
+- 3.4
+
 services:
   - docker
 
@@ -5,8 +10,6 @@ before_install:
   - docker build . -t avalon/files -f Dockerfile-files
   - docker build . -t avalon/database -f Dockerfile-database
   - docker build . -t avalon/tracker -f Dockerfile-tracker
-
-install:
   - docker run --name avalon-files -d --rm
       -p 445:445
       avalon/files
@@ -21,6 +24,14 @@ install:
       -v avalon-tracker:/opt/zou/zou/thumbnails
       -p 80:80
       avalon/tracker
+
+install:
+  - pip install nose
+
+script:
+  - echo Running Test..
+  - python -m nose tests
+  - echo All done!
 
 deploy:
   provider: script

@@ -215,7 +215,7 @@ def update(cd):
     print("All done")
 
 
-def backup():
+def backup(dst=None):
     """Outputs a zip file of the data in all the projects."""
 
     directory = tempfile.mkdtemp()
@@ -237,11 +237,19 @@ def backup():
                 f.write(json.dumps(data) + "\n")
 
     # Collect all data in zip file
-    zip_path = os.path.join(os.getcwd(), "Avalon_{0}".format(timestamp))
+    dst = dst or "Avalon_{0}".format(timestamp)
+    dst = dst.rsplit(".zip", 1)[0]
+    zip_path = os.path.join(os.getcwd(), dst)
     shutil.make_archive(zip_path, "zip", directory)
 
     # Clean up
     shutil.rmtree(directory)
+
+
+def drop(db):
+    client = pymongo.MongoClient(os.environ["AVALON_MONGO"])
+    client.drop_database(db)
+    print("Successfully dropped %s" % db)
 
 
 def restore(zip_path):
@@ -306,15 +314,11 @@ def main():
     parser.add_argument("--publish", action="store_true",
                         help="Publish from current working directory, "
                              "or supplied --root")
-    parser.add_argument(
-        "--backup",
-        action="store_true",
-        help="Create a backup in current working directory."
-    )
-    parser.add_argument(
-        "--restore",
-        help="Restore a project or a folder or projects."
-    )
+    parser.add_argument("--backup", nargs='?',
+                        help="Create a backup in current working directory.")
+    parser.add_argument("--restore",
+                        help="Restore a project or a folder or projects.")
+    parser.add_argument("--drop", help="Delete database")
 
     kwargs, args = parser.parse_known_args()
 
@@ -388,7 +392,7 @@ def main():
     elif kwargs.backup:
         returncode = 0
         try:
-            backup()
+            backup(kwargs.backup)
         except Exception:
             raise
 
@@ -396,6 +400,13 @@ def main():
         returncode = 0
         try:
             restore(kwargs.restore)
+        except Exception:
+            raise
+
+    elif kwargs.drop:
+        returncode = 0
+        try:
+            drop(kwargs.drop)
         except Exception:
             raise
 

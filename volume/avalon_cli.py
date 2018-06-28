@@ -79,21 +79,15 @@ def install():
         shutil.rmtree(tempdir)
 
 
-def _install(root=None):
-    missing_dependencies = list()
-    for dependency in ("PyQt5",):
-        try:
-            __import__(dependency)
-        except ImportError:
-            missing_dependencies.append(dependency)
-
-    if missing_dependencies:
-        print("Sorry, there are some dependencies missing from your system.\n")
-        print("\n".join(" - %s" % d for d in missing_dependencies) + "\n")
-        print("See https://getavalon.github.io/2.0/howto/#install "
-              "for more details.")
+def _check_pyqt5():
+    try:
+        __import__("PyQt5")
+    except ImportError:
+        print("Sorry, PyQt5 seems to be missing from your system.")
         sys.exit(1)
 
+
+def _install(root=None):
     # Enable overriding from local environment
     for dependency, name in (("PYBLISH_BASE", "pyblish-base"),
                              ("PYBLISH_QML", "pyblish-qml"),
@@ -221,7 +215,7 @@ def update(cd):
     print("All done")
 
 
-def backup():
+def backup(dst=None):
     """Outputs a zip file of the data in all the projects."""
 
     directory = tempfile.mkdtemp()
@@ -243,11 +237,19 @@ def backup():
                 f.write(json.dumps(data) + "\n")
 
     # Collect all data in zip file
-    zip_path = os.path.join(os.getcwd(), "Avalon_{0}".format(timestamp))
+    dst = dst or "Avalon_{0}".format(timestamp)
+    dst = dst.rsplit(".zip", 1)[0]
+    zip_path = os.path.join(os.getcwd(), dst)
     shutil.make_archive(zip_path, "zip", directory)
 
     # Clean up
     shutil.rmtree(directory)
+
+
+def drop(db):
+    client = pymongo.MongoClient(os.environ["AVALON_MONGO"])
+    client.drop_database(db)
+    print("Successfully dropped %s" % db)
 
 
 def restore(zip_path):
@@ -312,15 +314,11 @@ def main():
     parser.add_argument("--publish", action="store_true",
                         help="Publish from current working directory, "
                              "or supplied --root")
-    parser.add_argument(
-        "--backup",
-        action="store_true",
-        help="Create a backup in current working directory."
-    )
-    parser.add_argument(
-        "--restore",
-        help="Restore a project or a folder or projects."
-    )
+    parser.add_argument("--backup", nargs='?',
+                        help="Create a backup in current working directory.")
+    parser.add_argument("--restore",
+                        help="Restore a project or a folder or projects.")
+    parser.add_argument("--drop", help="Delete database")
 
     kwargs, args = parser.parse_known_args()
 
@@ -394,7 +392,7 @@ def main():
     elif kwargs.backup:
         returncode = 0
         try:
-            backup()
+            backup(kwargs.backup)
         except Exception:
             raise
 
@@ -405,7 +403,15 @@ def main():
         except Exception:
             raise
 
+    elif kwargs.drop:
+        returncode = 0
+        try:
+            drop(kwargs.drop)
+        except Exception:
+            raise
+
     else:
+        _check_pyqt5()
         root = os.environ["AVALON_PROJECTS"]
         returncode = forward([
             sys.executable, "-u", "-m", "launcher", "--root", root

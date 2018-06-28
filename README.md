@@ -123,8 +123,16 @@ docker run --name avalon-files -d --rm \
     -p 445:445 \
     -v $(pwd)/volume:/avalon \
     avalon/files:0.4 \
-    -s "Avalon;/avalon;yes;no;yes;all;none;all" \
+    -s "Avalon;/avalon;yes;yes;yes;all;none;all" \
     -u "avalon;default"
 ```
 
 See the [Usage](#usage) instructions, though you may want to remove `-d` and `-ti` so as to witness logs and more easily kill containers.
+
+#### Testing
+
+From `terminal.bat` run nose like so.
+
+```bash
+python -m nose tests
+```

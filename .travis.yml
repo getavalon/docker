@@ -1,0 +1,21 @@
+language: python
+
+sudo: required
+dist: trusty
+
+python:
+- 3.4
+
+services:
+  - docker
+
+script:
+  - docker build -t avalon .
+  - docker run \
+    --name avalon \
+    -v avalon-db:/data/db \
+    --rm \
+    -p 445:445 \
+    -p 27017:27017 \
+    -p 80:80 \
+    docker

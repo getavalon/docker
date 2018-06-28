@@ -79,21 +79,15 @@ def install():
         shutil.rmtree(tempdir)
 
 
-def _install(root=None):
-    missing_dependencies = list()
-    for dependency in ("PyQt5",):
-        try:
-            __import__(dependency)
-        except ImportError:
-            missing_dependencies.append(dependency)
-
-    if missing_dependencies:
-        print("Sorry, there are some dependencies missing from your system.\n")
-        print("\n".join(" - %s" % d for d in missing_dependencies) + "\n")
-        print("See https://getavalon.github.io/2.0/howto/#install "
-              "for more details.")
+def _check_pyqt5():
+    try:
+        __import__("PyQt5")
+    except ImportError:
+        print("Sorry, PyQt5 seems to be missing from your system.")
         sys.exit(1)
 
+
+def _install(root=None):
     # Enable overriding from local environment
     for dependency, name in (("PYBLISH_BASE", "pyblish-base"),
                              ("PYBLISH_QML", "pyblish-qml"),
@@ -406,6 +400,7 @@ def main():
             raise
 
     else:
+        _check_pyqt5()
         root = os.environ["AVALON_PROJECTS"]
         returncode = forward([
             sys.executable, "-u", "-m", "launcher", "--root", root

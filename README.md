@@ -75,7 +75,7 @@ Click on any of the below problems for potential causes and solutions.
     <br>
     Run the following snippet from a <code>cmd.exe</code> with administrator privileges.
     <br>
-    <pre>netsh advfirewall firewall add rule name="Avalon Python" dir=in action=allow program="\\192.168.99.100\Avalon\bin\windows\python36\python.exe" enable=yes
+    <pre>netsh advfirewall firewall add rule name="Avalon Database" dir=in action=allow protocol=TCP localport=27017
     </pre>
 </details>
 

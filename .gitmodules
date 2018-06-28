@@ -16,3 +16,6 @@
 [submodule "volume/git/pyblish-qml"]
 	path = volume/git/pyblish-qml
 	url = https://github.com/pyblish/pyblish-qml.git
+[submodule "volume/git/cgwire-gazu"]
+	path = volume/git/cgwire-gazu
+	url = https://github.com/cgwire/gazu.git

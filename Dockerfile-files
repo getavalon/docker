@@ -1,0 +1,4 @@
+FROM dperson/samba
+
+# Make container into a data volume, with Samba built-in
+COPY ./volume /avalon

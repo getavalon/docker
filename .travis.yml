@@ -1,25 +1,25 @@
 services:
   - docker
 
-build:
+before_install:
   - docker build . -t avalon/files -f Dockerfile-files
   - docker build . -t avalon/database -f Dockerfile-database
   - docker build . -t avalon/tracker -f Dockerfile-tracker
 
-script:
-  - docker run --name avalon-files -d --rm \
-      -p 445:445 \
-      avalon/files \
-      -s "Avalon;/avalon;yes;no;yes;all;none;all" \
+install:
+  - docker run --name avalon-files -d --rm
+      -p 445:445
+      avalon/files
+      -s "Avalon;/avalon;yes;no;yes;all;none;all"
       -u "avalon;default"
-  - docker run --name avalon-database -d --rm \
-      -v avalon-database:/data/db \
-      -p 27017:27017 \
+  - docker run --name avalon-database -d --rm
+      -v avalon-database:/data/db
+      -p 27017:27017
       avalon/database
-  - docker run --name avalon-tracker -d --rm \
-      -v avalon-tracker:/var/lib/postgresql \
-      -v avalon-tracker:/opt/zou/zou/thumbnails \
-      -p 80:80 \
+  - docker run --name avalon-tracker -d --rm
+      -v avalon-tracker:/var/lib/postgresql
+      -v avalon-tracker:/opt/zou/zou/thumbnails
+      -p 80:80
       avalon/tracker
 
 deploy:

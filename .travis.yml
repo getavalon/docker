@@ -1,0 +1,41 @@
+services:
+  - docker
+
+build:
+  - docker build . -t avalon/files -f Dockerfile-files
+  - docker build . -t avalon/database -f Dockerfile-database
+  - docker build . -t avalon/tracker -f Dockerfile-tracker
+
+script:
+  - docker run --name avalon-files -d --rm \
+      -p 445:445 \
+      avalon/files:$TAG \
+      -s "Avalon;/avalon;yes;no;yes;all;none;all" \
+      -u "avalon;default"
+  - docker run --name avalon-database -d --rm \
+      -v avalon-database:/data/db \
+      -p 27017:27017 \
+      avalon/database:$TAG
+  - docker run --name avalon-tracker -d --rm \
+      -v avalon-tracker:/var/lib/postgresql \
+      -v avalon-tracker:/opt/zou/zou/thumbnails \
+      -p 80:80 \
+      avalon/tracker:$TAG
+
+deploy:
+  provider: script
+  script: 
+    - docker tag avalon/files avalon/files:$TRAVIS_TAG
+    - docker tag avalon/database avalon/database:$TRAVIS_TAG
+    - docker tag avalon/tracker avalon/tracker:$TRAVIS_TAG
+    - docker push avalon/files:$TRAVIS_TAG
+    - docker push avalon/database:$TRAVIS_TAG
+    - docker push avalon/tracker:$TRAVIS_TAG
+  on:
+    tags: true
+    branch: master
+
+env:
+  global:
+  - secure: A/rnownMQTYJOKNgNESg8p9ByuA7bozKVqWW6VIQvzkV7KqUd2Uc5rcJzv9yY8T55QhjJX9krWHABjWDKpe9mN9qZ4t8ADZwSH6fP5UFJehPyoxArIoNJL+HlQZJOarFnUT9SCAoqzfjQU6hsbo8sgZuQbur3db6jyMyFXUeYzfVlOQEyUysaX5KBLTfr1p6aVPM3Zq9y8ETutV457dfFib3CLldwkZWcbG+EnokwJZ5V0wCzUbfmDh1fxOEK/UixxJwB71dzxGHRcx0G/5m3+C5ssLcrNlueJRvrxxaEB81Emn09D1m+Ji8/6dopJkGiuGIpLb/bpa6sDdGXn235lLvKf2tMRwkHp5MTp/KsTjaRzC3AWjSS+jGT8WAOBFUiiqITZB8Fv1RYQxV2gfcilhdZfY2mUN6GQCRxvEDUreiEQadM1mCxDAs5cTDt4kZMzdBsFOa8DwMAlulOs4YESY+ItMikn0KR3xj3AeMyYsZwGW+2BHGZtI8SY7SHiEPNJbhCvZ8uLvbA+rCdBeIw8lAzf/0VJn0jjfw4ScLUz0BxJ1sPV/8bQUZQeyIjNH5f6O9ovwH6I4J6/FLOI8L3DDoZVghNDrBROg+TEwLZTaQfUyN0c/HsVQk+q6bW22ojkqlGvYqRaa6UIrCyfe3VJbGy3d1Pz4PXaU7UiiKANw=
+  - secure: m1mkGfO5oOJc8UO8hHL2qeKxD/ZalH+WlVGXwT/SDs9KNFIPdBOu6iE+weJox+U3g6M0CqP3k6O8nuL5iGHs33WKHdvROVoc4bFapSscBMyQigjBJApsor2XWvsKwXjPsINea4PYj/NEbakpOIBduGRWq3+QZXnMP0RZqC6lBWEkG4iTfpqtK5SjO6ptGCvF4jIn3ayTENJ8LzN3jZhBhEbtDSrnEE6UJsxMOO8Z0tQgAHULXhWS9zHc6i2DUvsQhPaG6I07GTtKWdfpQB3ldzWJGoOrC4zbgcOUyOhznzjlf+ofKqlE+3ER1cnX4Rr0URqiecRgEKb2S5iypqOQ4SmpQS85seXvrTYpYvRJBdn2eYgGCX230B0bn7x0+XHCVQG4iCFGLBNfQohKHuQkq6bWl9hXGWNb3E6Gu+cPQBbDuEiFYay7wLDG2jSeEC/x7KYwrY42WY77OU3dKVInHD2ra4s1J42BPe5rTTS6ya4mA2ndiBRP/mUJpFjJkGQ7/++hkJ7/oU4fgEspr0wwnv56+mnFz4oW/sxk7cx8oa0PgUzxbZhSx8xO8GiuWDMVIQJDOxvfD5EKBOVDEUvdK36UKvCEf745WnPelgCPi9q7kd2QNl9VDF8CXMcw7YXNwoqu3ObOfWNTsdpPY9b1lyDdnxFXPbdwkBUyRC99CMQ=

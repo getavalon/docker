@@ -27,15 +27,14 @@ before_install:
 
 install:
   - pip install nose
+  - pip install pymongo
 
 script:
-  - echo Running Test..
-  - python -m nose tests
-  - echo All done!
+  - python run_tests.py
 
 deploy:
   provider: script
-  script: 
+  script:
     - docker tag avalon/files avalon/files:$TRAVIS_TAG
     - docker tag avalon/database avalon/database:$TRAVIS_TAG
     - docker tag avalon/tracker avalon/tracker:$TRAVIS_TAG

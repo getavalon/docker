@@ -21,10 +21,11 @@ Each of these are served via Docker images.
 With Docker available on your system, copy/paste the following commands into Docker Quickstart to start the Avalon components.
 
 ```bash
+# From Docker Quickstart
 docker run --name avalon-files -d --rm \
     -p 445:445 \
     avalon/files:0.4 \
-    -s "Avalon;/avalon;yes;no;yes;all;none;all" \
+    -s "Avalon;/avalon;yes;yes;yes;all;none;all" \
     -u "avalon;default"
 docker run --name avalon-database -d --rm \
     -v avalon-database:/data/db \
@@ -39,13 +40,26 @@ docker run --name avalon-tracker -d --rm \
 
 Finally, from `cmd.exe` run the following to map Avalon files to a drive, such as `A:\`
 
-```bash
+```cmd
+:: From cmd.exe
 net use /delete a:
 net use a: \\192.168.99.100\avalon /user:avalon default
 ```
 
+Now you are ready to create a project and populate it with assets.
+
+1. Double-click `A:\terminal.bat`
+2. Type `avalon --help` to ensure the installation was successful
+3. Go to [Tutorials](https://getavalon.github.io/2.0/tutorials/) for more
+
+<br>
+
+### Troubleshooting
+
+Click on any of the below problems for potential causes and solutions.
+
 <details>
- <summary>Trouble?</summary>
+ <summary>1. The network name cannot be found</summary>
   <br>
   <ul>
     <li>On Windows and OSX, find your IP via <code>docker-machine ip</code></li>
@@ -53,6 +67,21 @@ net use a: \\192.168.99.100\avalon /user:avalon default
     <li>If you encounter <code>The network name cannot be found</code> ensure you run the above in <code>cmd.exe</code> and not <code>Docker Quickstart</code>, <code>bash</code> or <code>MSYS2</code> etc.</li>
   </ul>
 </details>
+
+<details>
+    <summary>2. Couldn't connect to mongodb</summary>
+    <br>
+    If you are having trouble running <code>avalon</code> due to not being able to connect with the database, odds are the Windows firewall is preventing the two from speaking.<br>
+    <br>
+    Run the following snippet from a <code>cmd.exe</code> with administrator privileges.
+    <br>
+    <pre>netsh advfirewall firewall add rule name="Avalon Database" dir=in action=allow protocol=TCP localport=27017
+    </pre>
+</details>
+
+<br>
+
+Can't find your problem? Submit a [bug report](../../issues)
 
 <br>
 
@@ -84,6 +113,18 @@ cd docker
 docker build . -t avalon/files -f Dockerfile-files
 docker build . -t avalon/database -f Dockerfile-database
 docker build . -t avalon/tracker -f Dockerfile-tracker
+```
+
+To use your local copy of this repository for `A:\`, mount the repository into the `files` container.
+
+```bash
+docker kill avalon-files
+docker run --name avalon-files -d --rm \
+    -p 445:445 \
+    -v $(pwd)/volume:/avalon \
+    avalon/files:0.4 \
+    -s "Avalon;/avalon;yes;no;yes;all;none;all" \
+    -u "avalon;default"
 ```
 
 See the [Usage](#usage) instructions, though you may want to remove `-d` and `-ti` so as to witness logs and more easily kill containers.

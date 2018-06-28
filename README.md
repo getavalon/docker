@@ -25,7 +25,7 @@ With Docker available on your system, copy/paste the following commands into Doc
 docker run --name avalon-files -d --rm \
     -p 445:445 \
     avalon/files:0.4 \
-    -s "Avalon;/avalon;yes;no;yes;all;none;all" \
+    -s "Avalon;/avalon;yes;yes;yes;all;none;all" \
     -u "avalon;default"
 docker run --name avalon-database -d --rm \
     -v avalon-database:/data/db \

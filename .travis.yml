@@ -29,7 +29,7 @@ before_install:
       -p 80:80
       avalon/tracker
 
-  - sudo mount -t cifs 
+  - sudo mkdir /avalon && sudo mount -t cifs 
       -o username=avalon,password=default
       //127.0.0.1/avalon /avalon
 

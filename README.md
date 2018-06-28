@@ -129,11 +129,10 @@ docker run --name avalon-files -d --rm \
 
 See the [Usage](#usage) instructions, though you may want to remove `-d` and `-ti` so as to witness logs and more easily kill containers.
 
-## Testing
+#### Testing
 
-For testing [nose](http://nose.readthedocs.io/en/latest/) and [pymongo](https://api.mongodb.com/python/current/) are required.
+From `terminal.bat` run nose like so.
 
 ```bash
-cd docker
-python run_tests.py
+python -m nose tests
 ```

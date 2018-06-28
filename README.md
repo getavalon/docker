@@ -87,3 +87,12 @@ docker build . -t avalon/tracker -f Dockerfile-tracker
 ```
 
 See the [Usage](#usage) instructions, though you may want to remove `-d` and `-ti` so as to witness logs and more easily kill containers.
+
+## Testing
+
+For testing [nose](http://nose.readthedocs.io/en/latest/) and [pymongo](https://api.mongodb.com/python/current/) are required.
+
+```bash
+cd docker
+python run_tests.py
+```

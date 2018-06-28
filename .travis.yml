@@ -1,0 +1,11 @@
+language: python
+sudo: required
+services:
+  - docker
+python:
+  - "3.6"
+install:
+  - pip install nose
+  - pip install pymongo
+  - pip install PyQt5
+script: python run_tests.py

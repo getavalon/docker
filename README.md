@@ -68,3 +68,10 @@ When developing it can be useful to start from a new database. All you need to d
 ```bash
 $ docker run -ti --name avalon --rm -p 27017:27017 -p 445:445 -p 139:139 -p 80:80 getavalon/docker
 ```
+
+## Testing
+
+```bash
+$ export PATH=/path/to/avalon-docker/volume/:${PATH}
+$ python run_tests.py
+```

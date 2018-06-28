@@ -1,0 +1,18 @@
+environment:
+
+  matrix:
+
+    - PYTHON: "C:\\Python36-x64"
+      PYTHON_VERSION: "3.6.x"
+      PYTHON_ARCH: "64"
+
+install:
+  - "%CMD_IN_ENV% install_toolbox.bat"
+  - SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%
+  - pip install nose
+  - pip install pymongo
+
+build: off
+
+test_script:
+- "%CMD_IN_ENV% python run_tests.py"

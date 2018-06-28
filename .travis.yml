@@ -1,8 +1,5 @@
 language: python
 
-sudo: required
-dist: trusty
-
 python:
 - 3.4
 
@@ -16,6 +13,7 @@ before_install:
 
   - docker run --name avalon-files -d --rm
       -p 445:445
+      -v /avalon:/travis
       avalon/files
       -s "Avalon;/avalon;yes;yes;yes;all;none;all"
       -u "avalon;default"
@@ -29,9 +27,8 @@ before_install:
       -p 80:80
       avalon/tracker
 
-  - sudo mkdir /avalon && sudo mount -t cifs 
-      -o username=avalon,password=default
-      //127.0.0.1/avalon /avalon
+  # Expose Avalon files to Travis
+  - docker exec avalon-files cp -a /avalon/. /travis/
 
 env:
   global:

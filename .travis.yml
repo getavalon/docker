@@ -1,5 +1,8 @@
 language: python
 
+sudo: required
+dist: trusty
+
 python:
 - 3.4
 
@@ -26,13 +29,13 @@ before_install:
       -p 80:80
       avalon/tracker
 
-  - mount -t cifs 
+  - sudo mount -t cifs 
       -o username=avalon,password=default
       //127.0.0.1/avalon /avalon
 
 env:
   global:
-    - AVALON_MONGO=mongodb://192.168.99.100:27017
+    - AVALON_MONGO=mongodb://127.0.0.1:27017
     - AVALON_DEBUG=true
 
     - PATH=/avalon:$PATH

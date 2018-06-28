@@ -54,15 +54,7 @@ install:
   - pip install nose
 
 script:
-  - export PATH=/avalon:$PATH
-
-  # Test --backup and --restore
-  - avalon --import batman
-  - avalon --backup mybackup.zip
-  - avalon --drop avalon
-  - avalon --restore mybackup.zip
-
-  # Run Python tests
+  - . tests/test_cli.sh
   - python -m nose tests
 
 deploy:

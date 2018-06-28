@@ -123,7 +123,7 @@ docker run --name avalon-files -d --rm \
     -p 445:445 \
     -v $(pwd)/volume:/avalon \
     avalon/files:0.4 \
-    -s "Avalon;/avalon;yes;no;yes;all;none;all" \
+    -s "Avalon;/avalon;yes;yes;yes;all;none;all" \
     -u "avalon;default"
 ```
 

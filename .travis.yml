@@ -30,6 +30,8 @@ before_install:
   # Expose Avalon files to Travis
   - docker exec avalon-files cp -a /avalon/. /travis/
 
+  - echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
+
 env:
   global:
     - AVALON_DEBUG=true
@@ -48,7 +50,8 @@ script:
   - python -m nose tests
 
 after_success:
-  - if [[ "$TRAVIS_BRANCH" != "master" && ! -z "$TRAVIS_TAG" ]]; then
+  - |
+    if [[ "$TRAVIS_BRANCH" != "master" && ! -z "$TRAVIS_TAG" ]]; then
     echo Deploying from GitHub release "$TRAVIS_TAG"
 
     echo Tagging $TRAVIS_TAG..

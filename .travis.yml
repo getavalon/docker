@@ -56,6 +56,14 @@ deploy:
     - docker push avalon/files:$TRAVIS_TAG
     - docker push avalon/database:$TRAVIS_TAG
     - docker push avalon/tracker:$TRAVIS_TAG
+
+    # Update :latest
+    - docker tag avalon/files avalon/files:latest
+    - docker tag avalon/database avalon/database:latest
+    - docker tag avalon/tracker avalon/tracker:latest
+    - docker push avalon/files:latest
+    - docker push avalon/database:latest
+    - docker push avalon/tracker:latest
   on:
     tags: true
     branch: master

@@ -49,21 +49,30 @@ script:
 
 deploy:
   provider: script
+  skip_cleanup: true
   script:
+    - echo Tagging..
     - docker tag avalon/files avalon/files:$TRAVIS_TAG
     - docker tag avalon/database avalon/database:$TRAVIS_TAG
     - docker tag avalon/tracker avalon/tracker:$TRAVIS_TAG
+
+    - echo Pushing..
     - docker push avalon/files:$TRAVIS_TAG
     - docker push avalon/database:$TRAVIS_TAG
     - docker push avalon/tracker:$TRAVIS_TAG
 
     # Update :latest
+    - echo Tagging latest..
     - docker tag avalon/files avalon/files:latest
     - docker tag avalon/database avalon/database:latest
     - docker tag avalon/tracker avalon/tracker:latest
+
+    - echo Pushing latest..
     - docker push avalon/files:latest
     - docker push avalon/database:latest
     - docker push avalon/tracker:latest
+
+    - echo Successfully deployed Avalon
   on:
     tags: true
     branch: master

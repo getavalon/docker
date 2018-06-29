@@ -4,8 +4,7 @@ set AVALON_MONGO=mongodb://192.168.99.100:27017
 set PATH=%~dp0;%~dp0bin\windows\python36;%PATH%
 
 :: Expose Python libraries
-set PYTHONPATH=%~dp0git\avalon-core;%PYTHONPATH%
-set PYTHONPATH=%~dp0git\avalon-core;%PYTHONPATH%
+set PYTHONPATH=%~dp0git\avalon-core
 set PYTHONPATH=%~dp0git\avalon-launcher;%PYTHONPATH%
 set PYTHONPATH=%~dp0git\mindbender-config;%PYTHONPATH%
 set PYTHONPATH=%~dp0git\pyblish-base;%PYTHONPATH%

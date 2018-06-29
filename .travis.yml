@@ -32,19 +32,7 @@ before_install:
 
 env:
   global:
-    # Reproduce terminal.bat
-    - AVALON_MONGO=mongodb://127.0.0.1:27017
     - AVALON_DEBUG=true
-
-    - PATH=/avalon:$PATH
-
-    - PYTHONPATH=/avalon/git/avalon-core
-    - PYTHONPATH=/avalon/git/avalon-launcher:$PYTHONPATH
-    - PYTHONPATH=/avalon/git/mindbender-config:$PYTHONPATH
-    - PYTHONPATH=/avalon/git/pyblish-base:$PYTHONPATH
-    - PYTHONPATH=/avalon/git/pyblish-qml:$PYTHONPATH
-    - PYTHONPATH=/avalon/git/cgwire-gazu:$PYTHONPATH
-    - PYTHONPATH=/avalon/bin/pythonpath:$PYTHONPATH
 
     # For deployment
     - secure: A/rnownMQTYJOKNgNESg8p9ByuA7bozKVqWW6VIQvzkV7KqUd2Uc5rcJzv9yY8T55QhjJX9krWHABjWDKpe9mN9qZ4t8ADZwSH6fP5UFJehPyoxArIoNJL+HlQZJOarFnUT9SCAoqzfjQU6hsbo8sgZuQbur3db6jyMyFXUeYzfVlOQEyUysaX5KBLTfr1p6aVPM3Zq9y8ETutV457dfFib3CLldwkZWcbG+EnokwJZ5V0wCzUbfmDh1fxOEK/UixxJwB71dzxGHRcx0G/5m3+C5ssLcrNlueJRvrxxaEB81Emn09D1m+Ji8/6dopJkGiuGIpLb/bpa6sDdGXn235lLvKf2tMRwkHp5MTp/KsTjaRzC3AWjSS+jGT8WAOBFUiiqITZB8Fv1RYQxV2gfcilhdZfY2mUN6GQCRxvEDUreiEQadM1mCxDAs5cTDt4kZMzdBsFOa8DwMAlulOs4YESY+ItMikn0KR3xj3AeMyYsZwGW+2BHGZtI8SY7SHiEPNJbhCvZ8uLvbA+rCdBeIw8lAzf/0VJn0jjfw4ScLUz0BxJ1sPV/8bQUZQeyIjNH5f6O9ovwH6I4J6/FLOI8L3DDoZVghNDrBROg+TEwLZTaQfUyN0c/HsVQk+q6bW22ojkqlGvYqRaa6UIrCyfe3VJbGy3d1Pz4PXaU7UiiKANw=
@@ -54,6 +42,7 @@ install:
   - pip install nose
 
 script:
+  - . /avalon/terminal.sh
   - . tests/test_cli.sh
   - python -m nose tests
 

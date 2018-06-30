@@ -5,7 +5,7 @@ default_dirs = [
 	"renderData/shaders",
 	"images"
 ]
-label = "Autodesk Maya 2016x64"
+label = "Autodesk Maya 2016"
 schema = "avalon-core:application-1.0"
 executable = "maya2016"
 description = ""

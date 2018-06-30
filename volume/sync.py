@@ -1,9 +1,19 @@
 import os
+import json
+
 import gazu
 from avalon import io as avalon
+from avalon.vendor import toml
 
 
-def main():
+def main(apps):
+    """Syncing CGWire with Avalon.
+
+    Args:
+        apps: List of applications to add to projects. Example:
+            [{"name": "maya2015", "label": "Autodesk Maya 2015"}]
+    """
+
     projects = []
     objects = []
 
@@ -30,24 +40,7 @@ def main():
             "parent": None,
             "config": {
                 "schema": "avalon-core:config-1.0",
-                "apps": [
-                    {
-                        "name": "maya2015",
-                        "label": "Autodesk Maya 2015"
-                    },
-                    {
-                        "name": "maya2016",
-                        "label": "Autodesk Maya 2016"
-                    },
-                    {
-                        "name": "maya2017",
-                        "label": "Autodesk Maya 2017"
-                    },
-                    {
-                        "name": "nuke10",
-                        "label": "The Foundry Nuke 10.0"
-                    }
-                ],
+                "apps": apps,
                 "tasks": [
                     {"name": task["name"]}
                     for task in gazu.task.all_task_types()
@@ -116,8 +109,22 @@ if __name__ == '__main__':
     gazu.log_in("admin@example.com", "default")
     print("Logged in..")
 
+    # Get applications
+    print("Scanning for applications..")
+    path = os.path.abspath(os.path.join(__file__, "..", "bin"))
+    apps = []
+    for f in os.listdir(path):
+        if f.endswith(".toml"):
+            apps.append(
+                {
+                    "name": f.replace(".toml", ""),
+                    "label": toml.load(os.path.join(path, f))["label"]
+                }
+            )
+    print("Applications found:\n{0}".format(json.dumps(apps, indent=4)))
+
     while True:
         print("Syncing..")
-        main()
-        print("Sleeing for 10 seconds..")
+        main(apps)
+        print("Sleeping for 10 seconds..")
         time.sleep(10)

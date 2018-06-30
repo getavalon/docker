@@ -30,8 +30,6 @@ before_install:
   # Expose Avalon files to Travis
   - docker exec avalon-files cp -a /avalon/. /travis/
 
-  - echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
-
 env:
   global:
     - AVALON_DEBUG=true
@@ -77,3 +75,4 @@ after_success:
     echo Successfully deployed Avalon
 
     fi
+  - echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin

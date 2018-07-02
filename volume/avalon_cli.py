@@ -43,6 +43,13 @@ import tempfile
 import platform
 import contextlib
 import subprocess
+import json
+import time
+import datetime
+import zipfile
+
+import pymongo
+from bson import json_util
 
 REPO_DIR = os.path.dirname(os.path.abspath(__file__))
 AVALON_DEBUG = bool(os.getenv("AVALON_DEBUG"))
@@ -72,21 +79,15 @@ def install():
         shutil.rmtree(tempdir)
 
 
-def _install(root=None):
-    missing_dependencies = list()
-    for dependency in ("PyQt5",):
-        try:
-            __import__(dependency)
-        except ImportError:
-            missing_dependencies.append(dependency)
-
-    if missing_dependencies:
-        print("Sorry, there are some dependencies missing from your system.\n")
-        print("\n".join(" - %s" % d for d in missing_dependencies) + "\n")
-        print("See https://getavalon.github.io/2.0/howto/#install "
-              "for more details.")
+def _check_pyqt5():
+    try:
+        __import__("PyQt5")
+    except ImportError:
+        print("Sorry, PyQt5 seems to be missing from your system.")
         sys.exit(1)
 
+
+def _install(root=None):
     # Enable overriding from local environment
     for dependency, name in (("PYBLISH_BASE", "pyblish-base"),
                              ("PYBLISH_QML", "pyblish-qml"),
@@ -214,6 +215,78 @@ def update(cd):
     print("All done")
 
 
+def backup(dst=None):
+    """Outputs a zip file of the data in all the projects."""
+
+    directory = tempfile.mkdtemp()
+
+    timestamp = datetime.datetime.fromtimestamp(time.time()).strftime(
+        "%Y%m%d%H%M%S"
+    )
+
+    # Collect all projects data in Mongo
+    client = pymongo.MongoClient(os.environ["AVALON_MONGO"])
+    db = client["avalon"]
+
+    for name in db.collection_names():
+        filename = "{0}_{1}.json".format(name, timestamp)
+
+        with open(os.path.join(directory, filename), "w") as f:
+            project_data = db[name].find()
+            for data in json.loads(json_util.dumps(project_data)):
+                f.write(json.dumps(data) + "\n")
+
+    # Collect all data in zip file
+    dst = dst or "Avalon_{0}".format(timestamp)
+    dst = dst.rsplit(".zip", 1)[0]
+    zip_path = os.path.join(os.getcwd(), dst)
+    shutil.make_archive(zip_path, "zip", directory)
+
+    # Clean up
+    shutil.rmtree(directory)
+
+
+def drop(db):
+    client = pymongo.MongoClient(os.environ["AVALON_MONGO"])
+    client.drop_database(db)
+    print("Successfully dropped %s" % db)
+
+
+def restore(zip_path):
+    """Restores data from backups.
+
+    Arguments:
+        path (str): Path to backup zip files.
+
+    """
+    directory = tempfile.mkdtemp()
+
+    # Unzip backup
+    zip_ref = zipfile.ZipFile(zip_path, "r")
+    zip_ref.extractall(directory)
+    zip_ref.close()
+
+    # Insert data from json seralized projects
+    for f in os.listdir(directory):
+        file_path = os.path.join(directory, f)
+        project_data = []
+        project_name = ""
+        with open(file_path) as file_data:
+            for line in file_data:
+                data = json_util.loads(line)
+                if "type" in data and data["type"] == "project":
+                    project_name = data["name"]
+                project_data.append(data)
+
+        client = pymongo.MongoClient(os.environ["AVALON_MONGO"])
+        db = client["avalon"]
+        project = db[project_name]
+        project.insert_many(project_data).inserted_ids
+
+    # Clean up
+    shutil.rmtree(directory)
+
+
 def main():
     import argparse
 
@@ -241,6 +314,11 @@ def main():
     parser.add_argument("--publish", action="store_true",
                         help="Publish from current working directory, "
                              "or supplied --root")
+    parser.add_argument("--backup", nargs='?',
+                        help="Create a backup in current working directory.")
+    parser.add_argument("--restore",
+                        help="Restore a project or a folder or projects.")
+    parser.add_argument("--drop", help="Delete database")
     parser.add_argument(
         "--manager", action="store_true", help="Launch Project Manager"
     )
@@ -314,12 +392,34 @@ def main():
                 sys.executable, "-u", "-m", "pyblish", "gui"
             ] + args, silent=True)
 
+    elif kwargs.backup:
+        returncode = 0
+        try:
+            backup(kwargs.backup)
+        except Exception:
+            raise
+
+    elif kwargs.restore:
+        returncode = 0
+        try:
+            restore(kwargs.restore)
+        except Exception:
+            raise
+
+    elif kwargs.drop:
+        returncode = 0
+        try:
+            drop(kwargs.drop)
+        except Exception:
+            raise
+
     elif kwargs.manager:
         returncode = forward(
             [sys.executable, "-u", "-m", "avalon.tools.projectmanager"] + args
         )
 
     else:
+        _check_pyqt5()
         root = os.environ["AVALON_PROJECTS"]
         returncode = forward([
             sys.executable, "-u", "-m", "launcher", "--root", root

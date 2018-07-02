@@ -1,0 +1,13 @@
+Deprecated-1.2.0.dist-info/DESCRIPTION.rst,sha256=j4TtP7-iM3xJ4GdIVadcZdSNJvn7pvN2DhW2szCD018,3452
+Deprecated-1.2.0.dist-info/METADATA,sha256=IksV5N0V2O8i3ZoS4iDoWmoB6mMIm5krOkmrRZX7B5A,4811
+Deprecated-1.2.0.dist-info/RECORD,,
+Deprecated-1.2.0.dist-info/WHEEL,sha256=kdsN-5OJAZIiHN-iO4Rhl82KyS0bDWf4uBwMbkNafr8,110
+Deprecated-1.2.0.dist-info/metadata.json,sha256=vkl6piwF5PTcRLo8re79D7HrAiDwmbSsWdnpNRxvuL0,1388
+Deprecated-1.2.0.dist-info/top_level.txt,sha256=nHbOYawKPQQE5lQl-toUB1JBRJjUyn_m_Mb8RVJ0RjA,11
+deprecated/__init__.py,sha256=rZVKtVQzu_K48Ekd7tOf-YQ-fBwZB5Lp23YJspeBW5k,312
+deprecated/classic.py,sha256=Uk3BlVXTbt7q0kQnjQUuF-Yum7lQI5CaIMcndIMRc08,5254
+deprecated/sphinx.py,sha256=s6SMYppoRY51afWpFsr_C_V_ozZ_C1onyGY2fFnD5ko,3016
+Deprecated-1.2.0.dist-info/INSTALLER,sha256=zuuue4knoyJ-UwPPXg8fezS7VCrXJQrAP7zeNuwvFQg,4
+deprecated/__pycache__/classic.cpython-36.pyc,,
+deprecated/__pycache__/sphinx.cpython-36.pyc,,
+deprecated/__pycache__/__init__.cpython-36.pyc,,

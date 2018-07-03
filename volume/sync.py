@@ -1,11 +1,14 @@
 import os
+
 import gazu
+import pymongo
 from avalon import io as avalon
 
 
 def main():
     projects = []
     objects = []
+    tasks = [{"name": task["name"]} for task in gazu.task.all_task_types()]
 
     for project in gazu.project.all_projects():
         assets = gazu.asset.all_assets_for_project(project)
@@ -48,10 +51,7 @@ def main():
                         "label": "The Foundry Nuke 10.0"
                     }
                 ],
-                "tasks": [
-                    {"name": task["name"]}
-                    for task in gazu.task.all_task_types()
-                ],
+                "tasks": tasks,
                 "template": {
                     "work":
                         "{root}/{project}/{silo}/{asset}/work/"
@@ -88,6 +88,20 @@ def main():
     print("Synchronising..")
     for project in projects:
         if project["name"] in existing_projects:
+            # Update task types
+            existing_project = existing_projects[project["name"]]
+            existing_project_task_types = existing_project["config"]["tasks"]
+            if existing_project_task_types != tasks:
+                print(
+                    "Updating tasks types on \"{0}\" to:\n{1}".format(
+                        project["name"], tasks
+                    )
+                )
+                existing_project["config"]["tasks"] = tasks
+                client = pymongo.MongoClient(os.environ["AVALON_MONGO"])
+                db = client["avalon"]
+                db[project["name"]].save(existing_project)
+
             continue
 
         print("Installing project: %s" % project["name"])
@@ -119,5 +133,5 @@ if __name__ == '__main__':
     while True:
         print("Syncing..")
         main()
-        print("Sleeing for 10 seconds..")
+        print("Sleeping for 10 seconds..")
         time.sleep(10)

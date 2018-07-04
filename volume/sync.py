@@ -14,14 +14,21 @@ def main():
         entities = {}
         for assets, silo in ((assets, "assets"), (shots, "shots")):
             for asset in assets:
-                name = asset["name"].replace(" ", "")  # remove spaces
+                entity_type = gazu.entity.get_entity_type(
+                    asset["entity_type_id"]
+                )
+                # Remove spaces for compatibility, lowercase for consistentcy
+                name = asset["name"].replace(" ", "_").lower()
                 entities[name] = {
                     "schema": "avalon-core:asset-2.0",
                     "name": name,
                     "silo": silo,
-                    "data": {},
                     "type": "asset",
-                    "parent": project["name"]
+                    "parent": project["name"],
+                    "data": {
+                        "label": asset["name"],
+                        "group": entity_type["name"]
+                    },
                 }
         objects[project["name"]] = entities
 

@@ -1,7 +1,6 @@
 import os
 
 import gazu
-import pymongo
 from avalon import io as avalon
 
 
@@ -98,9 +97,10 @@ def main():
                     )
                 )
                 existing_project["config"]["tasks"] = tasks
-                client = pymongo.MongoClient(os.environ["AVALON_MONGO"])
-                db = client["avalon"]
-                db[project["name"]].save(existing_project)
+                os.environ["AVALON_PROJECT"] = project["name"]
+                avalon.uninstall()
+                avalon.install()
+                avalon.replace_one({"type": "project"}, existing_project)
 
             continue
 

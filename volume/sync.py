@@ -6,6 +6,7 @@ from avalon import io as avalon
 def main():
     projects = {}
     objects = {}
+    objects_count = 0
 
     for project in gazu.project.all_projects():
         assets = gazu.asset.all_assets_for_project(project)
@@ -30,6 +31,9 @@ def main():
                         "group": entity_type["name"]
                     },
                 }
+
+                objects_count += 1
+
         objects[project["name"]] = entities
 
         projects[project["name"]] = {
@@ -75,7 +79,7 @@ def main():
 
     print("Found:")
     print("- %d projects" % len(projects))
-    print("- %d assets" % len(objects))
+    print("- %d assets" % objects_count)
 
     os.environ["AVALON_PROJECTS"] = r""
     os.environ["AVALON_PROJECT"] = "temp"

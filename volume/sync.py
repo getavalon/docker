@@ -4,25 +4,28 @@ from avalon import io as avalon
 
 
 def main():
-    projects = []
-    objects = []
+    projects = {}
+    objects = {}
 
     for project in gazu.project.all_projects():
         assets = gazu.asset.all_assets_for_project(project)
         shots = gazu.shot.all_shots_for_project(project)
 
+        entities = {}
         for assets, silo in ((assets, "assets"), (shots, "shots")):
             for asset in assets:
-                objects.append({
+                name = asset["name"].replace(" ", "")  # remove spaces
+                entities[name] = {
                     "schema": "avalon-core:asset-2.0",
-                    "name": asset["name"].replace(" ", ""),  # remove spaces
+                    "name": name,
                     "silo": silo,
                     "data": {},
                     "type": "asset",
-                    "parent": project["name"],
-                })
+                    "parent": project["name"]
+                }
+        objects[project["name"]] = entities
 
-        projects.append({
+        projects[project["name"]] = {
             "schema": "avalon-core:project-2.0",
             "type": "project",
             "name": project["name"],
@@ -61,7 +64,7 @@ def main():
                         "{subset}/v{version:0>3}/{subset}.{representation}"
                 }
             }
-        })
+        }
 
     print("Found:")
     print("- %d projects" % len(projects))
@@ -75,18 +78,27 @@ def main():
     os.environ["AVALON_MONGO"] = "mongodb://192.168.99.100:27017"
 
     existing_projects = {}
-    existing_assets = {}
+    existing_objects = {}
 
     print("Fetching Avalon data..")
     avalon.install()
     for project in avalon.projects():
         existing_projects[project["name"]] = project
 
-    for asset in avalon.find({"type": "asset"}):
-        existing_assets[asset["name"]] = asset
+        # Update project
+        os.environ["AVALON_PROJECT"] = project["name"]
+        avalon.uninstall()
+        avalon.install()
+
+        # Collect assets
+        assets = {}
+        for asset in avalon.find({"type": "asset"}):
+            assets[asset["name"]] = asset
+
+        existing_objects[project["name"]] = assets
 
     print("Synchronising..")
-    for project in projects:
+    for name, project in projects.items():
         if project["name"] in existing_projects:
             continue
 
@@ -97,13 +109,18 @@ def main():
 
         avalon.insert_one(project)
 
-    for asset in objects:
-        if asset["name"] in existing_assets:
-            continue
+    for project_name, assets in objects.items():
+        os.environ["AVALON_PROJECT"] = project_name
+        avalon.uninstall()
+        avalon.install()
 
-        asset["parent"] = avalon.locate([asset["parent"]])
-        print("Installing asset: %s" % asset["name"])
-        avalon.insert_one(asset)
+        for asset_name, asset in assets.items():
+            if asset_name in existing_objects.get(project_name, {}):
+                continue
+
+            asset["parent"] = avalon.locate([asset["parent"]])
+            print("Installing asset: %s" % asset_name)
+            avalon.insert_one(asset)
 
     print("Success")
 

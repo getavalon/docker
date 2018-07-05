@@ -1,7 +1,7 @@
 # Test --backup and --restore
 avalon --import batman
 avalon --backup mybackup.zip
-avalon --drop avalon
+avalon --drop batman
 avalon --restore mybackup.zip
 
 # Cleanup

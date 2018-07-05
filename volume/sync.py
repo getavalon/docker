@@ -22,6 +22,7 @@ def main():
                 sequence["name"] = "{0}_{1}".format(
                     episode["name"], sequence["name"]
                 )
+                sequence["visualParent"] = episode["name"]
                 sequences.append(sequence)
                 for shot in gazu.shot.all_shots_for_sequence(sequence):
                     shot["parent"] = sequence
@@ -29,6 +30,7 @@ def main():
                     shot["name"] = "{0}_{1}".format(
                         sequence["name"], shot["name"]
                     )
+                    shot["visualParent"] = sequence["name"]
                     shots.append(shot)
 
         silos = [
@@ -45,7 +47,7 @@ def main():
                 )
                 # Remove spaces for compatibility, lowercase for consistentcy
                 name = asset["name"].replace(" ", "_").lower()
-                entities[name] = {
+                data = {
                     "schema": "avalon-core:asset-2.0",
                     "name": name,
                     "silo": silo,
@@ -54,8 +56,13 @@ def main():
                     "data": {
                         "label": asset.get("label", asset["name"]),
                         "group": entity_type["name"]
-                    },
+                    }
                 }
+
+                if asset.get("visualParent"):
+                    data["data"]["visualParent"] = asset["visualParent"]
+
+                entities[name] = data
 
                 objects_count += 1
 
@@ -113,11 +120,12 @@ def main():
     os.environ["AVALON_CONFIG"] = "polly"
     os.environ["AVALON_MONGO"] = "mongodb://192.168.99.100:27017"
 
+    print("Fetching Avalon data..")
+    avalon.install()
+
     existing_projects = {}
     existing_objects = {}
 
-    print("Fetching Avalon data..")
-    avalon.install()
     for project in avalon.projects():
         existing_projects[project["name"]] = project
 
@@ -155,6 +163,11 @@ def main():
                 continue
 
             asset["parent"] = avalon.locate([asset["parent"]])
+
+            if asset["data"].get("visualParent"):
+                asset["data"]["visualParent"] = avalon.find_one(
+                    {"type": "asset", "name": asset["data"]["visualParent"]}
+                )["_id"]
             print("Installing asset: %s" % asset_name)
             avalon.insert_one(asset)
 

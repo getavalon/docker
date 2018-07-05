@@ -1,7 +1,7 @@
 import os
 
 import subprocess
-from avalon import io
+import pymongo
 
 
 def test_drop():
@@ -9,7 +9,7 @@ def test_drop():
     subprocess.call(["avalon", "--import", "batman"], shell=True)
     subprocess.call(["avalon", "--drop", "batman"], shell=True)
 
-    os.environ["AVALON_PROJECT"] = "batman"
-    io.install()
+    client = pymongo.MongoClient(os.environ["AVALON_MONGO"])
+    db = client["avalon"]
     msg = "Dropping project \"batman\" did not work."
-    assert io.find_one({"type": "project", "name": "batman"}) is None, msg
+    assert "batman" not in db.collection_names(), msg

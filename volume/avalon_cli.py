@@ -319,6 +319,9 @@ def main():
     parser.add_argument("--restore",
                         help="Restore a project or a folder or projects.")
     parser.add_argument("--drop", help="Delete database")
+    parser.add_argument(
+        "--manager", action="store_true", help="Launch Project Manager"
+    )
 
     kwargs, args = parser.parse_known_args()
 
@@ -409,6 +412,11 @@ def main():
             drop(kwargs.drop)
         except Exception:
             raise
+
+    elif kwargs.manager:
+        returncode = forward(
+            [sys.executable, "-u", "-m", "avalon.tools.projectmanager"] + args
+        )
 
     else:
         _check_pyqt5()

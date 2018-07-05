@@ -248,7 +248,7 @@ def backup(dst=None):
 
 def drop(db):
     client = pymongo.MongoClient(os.environ["AVALON_MONGO"])
-    client.drop_database(db)
+    client["avalon"][db].drop()
     print("Successfully dropped %s" % db)
 
 

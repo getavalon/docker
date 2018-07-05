@@ -11,6 +11,9 @@ def main():
     tasks = [{"name": task["name"]} for task in gazu.task.all_task_types()]
 
     for project in gazu.project.all_projects():
+        # Remove spaces for compatibility, lowercase for consistentcy
+        project_name = project["name"].replace(" ", "_").lower()
+
         assets = gazu.asset.all_assets_for_project(project)
         episodes = []
         sequences = []
@@ -33,6 +36,7 @@ def main():
                         sequence["name"], shot["name"]
                     )
                     shot["visualParent"] = sequence["name"]
+                    shot["tasks"] = gazu.task.all_tasks_for_shot(shot)
                     shots.append(shot)
 
         silos = [
@@ -54,7 +58,7 @@ def main():
                     "name": name,
                     "silo": silo,
                     "type": "asset",
-                    "parent": project["name"],
+                    "parent": project_name,
                     "data": {
                         "label": asset.get("label", asset["name"]),
                         "group": entity_type["name"]
@@ -64,17 +68,24 @@ def main():
                 if asset.get("visualParent"):
                     data["data"]["visualParent"] = asset["visualParent"]
 
+                if asset.get("tasks"):
+                    data["data"]["tasks"] = [
+                        task["task_type_name"] for task in asset["tasks"]
+                    ]
+
                 entities[name] = data
 
                 objects_count += 1
 
-        objects[project["name"]] = entities
+        objects[project_name] = entities
 
-        projects[project["name"]] = {
+        projects[project_name] = {
             "schema": "avalon-core:project-2.0",
             "type": "project",
-            "name": project["name"],
-            "data": {},
+            "name": project_name,
+            "data": {
+                "label": project["name"]
+            },
             "parent": None,
             "config": {
                 "schema": "avalon-core:config-1.0",
@@ -174,6 +185,23 @@ def main():
 
         for asset_name, asset in assets.items():
             if asset_name in existing_objects.get(project_name, {}):
+                # Update tasks
+                if asset["data"].get("tasks"):
+                    existing_asset = existing_objects[project_name][asset_name]
+                    existing_tasks = existing_asset["data"].get("tasks", [])
+                    if existing_tasks != asset["data"]["tasks"]:
+                        tasks = asset["data"]["tasks"]
+                        print(
+                            "Updating tasks on \"{0} / {1}\" to:\n{2}".format(
+                                project_name, asset_name, tasks
+                            )
+                        )
+                        existing_asset["data"]["tasks"] = tasks
+                        avalon.replace_one(
+                            {"type": "asset", "name": asset_name},
+                            existing_asset
+                        )
+
                 continue
 
             asset["parent"] = avalon.locate([asset["parent"]])
@@ -182,7 +210,11 @@ def main():
                 asset["data"]["visualParent"] = avalon.find_one(
                     {"type": "asset", "name": asset["data"]["visualParent"]}
                 )["_id"]
-            print("Installing asset: %s" % asset_name)
+            print(
+                "Installing asset: \"{0} / {1}\"".format(
+                    project_name, asset_name
+                )
+            )
             avalon.insert_one(asset)
 
     print("Success")

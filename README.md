@@ -52,6 +52,15 @@ Now you are ready to create a project and populate it with assets.
 2. Type `avalon --help` to ensure the installation was successful
 3. Go to [Tutorials](https://getavalon.github.io/2.0/tutorials/) for more
 
+#### Updating
+
+```bash
+# From Docker Quickstart
+docker pull dperson/samba
+docker pull avalon/database
+docker pull cgwire/cgwire
+```
+
 <br>
 
 ### Troubleshooting

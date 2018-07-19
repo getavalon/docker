@@ -132,7 +132,16 @@ See the [Usage](#usage) instructions, though you may want to remove `-d` and `-t
 #### Override modules
 
 When developing on individual repositories like Avalon-core or Avalon-launcher, it can be useful to have separate repositories from the submodules of Avalon-docker.  
-You can still utilize Avalon-docker for testing by using environment variables to override where Avalon-docker looks for the modules. The available environment variables are:
+You can still utilize Avalon-docker for testing by using environment variables to override where Avalon-docker looks for the modules.
+
+```bash
+$ git clone https://github.com/getavalon/core.git avalon-core
+$ set AVALON_CORE=%cd%\avalon-core
+$ # Launch Avalon, using this repo for the core
+$ avalon
+```
+
+The available environment variables are:
 
 | Environment Variable | Description
 |---|---

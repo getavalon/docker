@@ -1,0 +1,4 @@
+executable = "nukex10.5v6"
+schema = "avalon-core:application-1.0"
+application_dir = "nuke"
+label = "The Foundry NukeX 10.5v6"

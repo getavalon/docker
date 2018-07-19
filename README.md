@@ -129,6 +129,27 @@ docker run --name avalon-files -d --rm \
 
 See the [Usage](#usage) instructions, though you may want to remove `-d` and `-ti` so as to witness logs and more easily kill containers.
 
+#### Override modules
+
+When developing on individual repositories like Avalon-core or Avalon-launcher, it can be useful to have separate repositories from the submodules of Avalon-docker.  
+You can still utilize Avalon-docker for testing by using environment variables to override where Avalon-docker looks for the modules.
+
+```bash
+$ git clone https://github.com/getavalon/core.git avalon-core
+$ set AVALON_CORE=%cd%\avalon-core
+$ # Launch Avalon, using this repo for the core
+$ avalon
+```
+
+The available environment variables are:
+
+| Environment Variable | Description
+|---|---
+| ```AVALON_CORE``` | Override Avalon core module; https://github.com/getavalon/core
+| ```AVALON_LAUNCHER``` | Override Avalon launcher module; https://github.com/getavalon/launcher
+| ```PYBLISH_BASE``` | Override Pyblish base module; https://github.com/pyblish/pyblish-base
+| ```PYBLISH_QML``` | Override Pyblish qml module; https://github.com/pyblish/pyblish-qml
+
 #### Testing
 
 From `terminal.bat` run nose like so.

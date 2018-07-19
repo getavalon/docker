@@ -111,8 +111,8 @@ def _install(root=None):
     ])
 
     os.environ["PYTHONPATH"] = os.pathsep.join(
-        # Append to PYTHONPATH
-        os.getenv("PYTHONPATH", "").split(os.pathsep) + [
+        # Prepend to PYTHONPATH
+        [
             # Third-party dependencies for Avalon
             os.path.join(REPO_DIR, "bin", "pythonpath"),
 
@@ -123,7 +123,8 @@ def _install(root=None):
             # The Launcher itself
             os.getenv("AVALON_LAUNCHER"),
             os.getenv("AVALON_CORE"),
-        ]
+        ] +
+        os.getenv("PYTHONPATH", "").split(os.pathsep)
     )
 
     # Override default configuration by setting this value.

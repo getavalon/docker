@@ -10,29 +10,28 @@ dependencies:
     - PyQt5
 
 example:
-    $ python avalon.py --help
+    $ python avalon --help
 
 overrides:
-    avalon.py takes into account dependencies bundled
+    avalon takes into account dependencies bundled
     together with this distribution, but these can be
     overridden via environment variables.
-
-    Set any of the below to override which path to put
-    on your PYTHONPATH
 
     # Database
     - AVALON_MONGO=mongodb://localhost:27017
     - AVALON_DB=avalon
 
     # Dependencies
-    - PYBLISH_BASE=absolute/path
-    - PYBLISH_QML=absolute/path
-    - AVALON_CORE=absolute/path
-    - AVALON_LAUNCHER=absolute/path
-    - AVALON_EXAMPLES=absolute/path
+    - AVALON_PYTHONPATH=absolute/path
 
     # Enable additional output
     - AVALON_DEBUG=True
+
+    # Which Avalon config to use
+    - AVALON_CONFIG=polly
+
+    # Examples repository
+    - AVALON_EXAMPLES=absolute/path
 
 """
 
@@ -88,14 +87,28 @@ def _check_pyqt5():
 
 
 def _install(root=None):
-    # Enable overriding from local environment
-    for dependency, name in (("PYBLISH_BASE", "pyblish-base"),
-                             ("PYBLISH_QML", "pyblish-qml"),
-                             ("AVALON_CORE", "avalon-core"),
-                             ("AVALON_LAUNCHER", "avalon-launcher"),
-                             ("AVALON_EXAMPLES", "avalon-examples")):
-        if dependency not in os.environ:
-            os.environ[dependency] = os.path.join(REPO_DIR, "git", name)
+    # Copy AVALON_PYTHONPATH to PYTHONPATH
+    os.environ["PYTHONPATH"] = os.environ.get("AVALON_PYTHONPATH", "")
+
+    # Need to add all paths from PYTHONPATH to sys.path for import testing
+    for path in os.environ["PYTHONPATH"].split(os.pathsep):
+        sys.path.append(path)
+
+    # Adding dependencies from submodules if missing
+    dependencies = [
+        ("pyblish", "pyblish-base"),
+        ("pyblish_qml", "pyblish-qml"),
+        ("avalon", "avalon-core"),
+        ("launcher", "avalon-launcher"),
+        ("gazu", "cgwire-gazu")
+    ]
+    for dependency, name in dependencies:
+        try:
+            __import__(dependency)
+        except ImportError:
+            os.environ["PYTHONPATH"] += (
+                os.pathsep + os.path.join(REPO_DIR, "git", name)
+            )
 
     os.environ["PATH"] = os.pathsep.join([
         # Expose "avalon", overriding existing
@@ -110,28 +123,17 @@ def _install(root=None):
         os.path.join(REPO_DIR, "bin", platform.system().lower()),
     ])
 
-    os.environ["PYTHONPATH"] = os.pathsep.join(
-        # Prepend to PYTHONPATH
-        [
-            # Third-party dependencies for Avalon
-            os.path.join(REPO_DIR, "bin", "pythonpath"),
-
-            # Default config and dependency
-            os.getenv("PYBLISH_BASE"),
-            os.getenv("PYBLISH_QML"),
-
-            # The Launcher itself
-            os.getenv("AVALON_LAUNCHER"),
-            os.getenv("AVALON_CORE"),
-        ] +
-        os.getenv("PYTHONPATH", "").split(os.pathsep)
+    # Third-party dependencies for Avalon
+    os.environ["PYTHONPATH"] += (
+        os.pathsep + os.path.join(REPO_DIR, "bin", "pythonpath")
     )
 
     # Override default configuration by setting this value.
     if "AVALON_CONFIG" not in os.environ:
         os.environ["AVALON_CONFIG"] = "polly"
-        os.environ["PYTHONPATH"] += os.pathsep + os.path.join(
-            REPO_DIR, "git", "mindbender-config")
+        os.environ["PYTHONPATH"] += (
+            os.pathsep + os.path.join(REPO_DIR, "git", "mindbender-config")
+        )
 
     if root is not None:
         os.environ["AVALON_PROJECTS"] = root
@@ -139,7 +141,17 @@ def _install(root=None):
         try:
             root = os.environ["AVALON_PROJECTS"]
         except KeyError:
-            root = os.path.join(os.environ["AVALON_EXAMPLES"], "projects")
+            root = os.path.join(
+                os.getenv(
+                    "AVALON_EXAMPLES",
+                    os.path.join(
+                        os.path.dirname(os.path.abspath(__file__)),
+                        "git",
+                        "avalon-examples"
+                    )
+                ),
+                "projects"
+            )
             os.environ["AVALON_PROJECTS"] = root
 
     try:

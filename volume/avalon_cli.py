@@ -3,14 +3,14 @@
 This module contains a CLI towards Avalon and all of what
 is bundled together in this distribution.
 
-- https://github.com/getavalon/setup
+- https://github.com/getavalon/docker
 
 dependencies:
     - Python 2.6+ or 3.6+
     - PyQt5
 
 example:
-    $ python avalon --help
+    $ avalon --help
 
 overrides:
     avalon takes into account dependencies bundled

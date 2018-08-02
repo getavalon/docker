@@ -19,3 +19,6 @@
 [submodule "volume/git/cgwire-gazu"]
 	path = volume/git/cgwire-gazu
 	url = https://github.com/cgwire/gazu.git
+[submodule "volume/git/avalon-config"]
+	path = volume/git/avalon-config
+	url = https://github.com/getavalon/config.git

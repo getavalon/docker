@@ -38,21 +38,30 @@ overrides:
 
 import os
 import sys
-import shutil
-import tempfile
-import platform
-import contextlib
-import subprocess
 import json
 import time
-import datetime
+import shutil
 import zipfile
+import logging
+import datetime
+import tempfile
+import platform
+import subprocess
+import contextlib
 
 import pymongo
 from bson import json_util
 
+
 REPO_DIR = os.path.dirname(os.path.abspath(__file__))
+GIT_DIR = os.path.join(REPO_DIR, "git")
+HOME_DIR = os.path.expanduser("~/.avalon")
 AVALON_DEBUG = bool(os.getenv("AVALON_DEBUG"))
+
+log = logging.getLogger("avalon")
+
+if AVALON_DEBUG:
+    log.setLevel(logging.DEBUG)
 
 init = """\
 from avalon import api, shell
@@ -87,15 +96,89 @@ def _check_pyqt5():
         sys.exit(1)
 
 
+def _firsttime():
+    """Avalon was run for the first time
+
+    ~/.avalon
+        /bin
+        /examples
+        /pythonpath
+
+    """
+
+    # This function is the one creating the home directory,
+    # if it existed then it should have been deleted prior
+    # to running this.
+    assert not os.path.exists(HOME_DIR), "This is a bug"
+
+    # 1. Copy Python
+    osname = (
+        "windows" if os.name == "nt" else
+        "linux" if os.name == "posix" else
+        "osx"
+    )
+
+    # Sources
+    dirname = os.path.dirname(__file__)
+    zipname = os.path.join(dirname, "bin", osname + ".zip")
+    gitdir = os.path.join(dirname, "git")
+    examplesdir = os.path.join(gitdir, "avalon-examples", "projects")
+    pythondir = os.path.join(dirname, "bin", "pythonpath")
+
+    # Destinations
+    dst_bindir = os.path.join(HOME_DIR, "bin")
+    dst_examplesdir = os.path.join(HOME_DIR, "examples")
+    dst_pythondir = os.path.join(HOME_DIR, "pythonpath")
+
+    if os.path.isfile(zipname):
+        with zipfile.ZipFile(zipname) as f:
+            uncompress_size = sum(
+                (file.file_size for file in f.infolist())
+            )
+
+            extracted_size = 0
+            for file in f.infolist():
+                extracted_size += file.file_size
+                progress = extracted_size * 90 / uncompress_size
+                sys.stdout.write(
+                    "\rInitialising.. %d%%"
+                    % progress
+                )
+                f.extract(file, path=dst_bindir)
+
+    else:
+        print("No binaries provided for your OS, '%s'" % os.name)
+        print("See https://getavalon.github.io/2.0/guides/ for help")
+
+    # Store cross-platform Python dependencies
+    sys.stdout.write("\rInitialising.. 90%")
+    shutil.copytree(pythondir, dst_pythondir)
+
+    # Store examples
+    sys.stdout.write("\rInitialising.. 95%")
+    shutil.copytree(examplesdir, dst_examplesdir)
+
+    sys.stdout.write("\rInitialising.. 100%")
+    sys.stdout.write("\n")
+    print("All done, continuing..")
+    log.debug("Done")
+
+
 def _install(root=None):
     # Enable overriding from local environment
-    for dependency, name in (("PYBLISH_BASE", "pyblish-base"),
-                             ("PYBLISH_QML", "pyblish-qml"),
-                             ("AVALON_CORE", "avalon-core"),
-                             ("AVALON_LAUNCHER", "avalon-launcher"),
-                             ("AVALON_EXAMPLES", "avalon-examples")):
-        if dependency not in os.environ:
-            os.environ[dependency] = os.path.join(REPO_DIR, "git", name)
+    environ = {
+        "PYBLISH_BASE": os.path.join(GIT_DIR, "pyblish-base"),
+        "PYBLISH_QML": os.path.join(GIT_DIR, "pyblish-qml"),
+        "AVALON_CORE": os.path.join(GIT_DIR, "avalon-core"),
+        "AVALON_LAUNCHER": os.path.join(GIT_DIR, "avalon-launcher"),
+        "AVALON_EXAMPLES": os.path.join(HOME_DIR, "examples"),
+    }
+
+    for key, value in environ.items():
+        if key in os.environ:
+            continue
+
+        os.environ[key] = value
 
     os.environ["PATH"] = os.pathsep.join([
         # Expose "avalon", overriding existing
@@ -130,7 +213,7 @@ def _install(root=None):
     if "AVALON_CONFIG" not in os.environ:
         os.environ["AVALON_CONFIG"] = "polly"
         os.environ["PYTHONPATH"] += os.pathsep + os.path.join(
-            REPO_DIR, "git", "mindbender-config")
+            GIT_DIR, "mindbender-config")
 
     if root is not None:
         os.environ["AVALON_PROJECTS"] = root
@@ -319,8 +402,14 @@ def main():
     parser.add_argument("--restore",
                         help="Restore a project or a folder or projects.")
     parser.add_argument("--drop", help="Delete database")
+    parser.add_argument("--firsttime",
+                        action="store_true",
+                        help="Run first-time setup for Avalon")
 
     kwargs, args = parser.parse_known_args()
+
+    if kwargs.firsttime:
+        return _firsttime()
 
     _install(root=kwargs.root)
 

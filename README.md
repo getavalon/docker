@@ -79,6 +79,20 @@ Click on any of the below problems for potential causes and solutions.
     </pre>
 </details>
 
+
+<details>
+    <summary>3. Open File - Security Warning</summary>
+    <br>
+    If running <code>terminal.bat</code> pops up this dialog:
+    <br>
+    <img src=https://user-images.githubusercontent.com/2152766/42368426-e8050224-80fe-11e8-95d7-f4821db84467.png>
+    <br>
+    You need to tell Windows that the virtual machine running Docker is <b>trusted</b>.
+    <br>
+    See https://superuser.com/questions/44503/how-do-i-tell-windows-7-to-trust-a-particular-network-location
+</details>
+
+
 <br>
 
 Can't find your problem? Submit a [bug report](../../issues)

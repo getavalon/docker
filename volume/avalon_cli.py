@@ -127,7 +127,6 @@ def _install(root=None):
     # Third-party dependencies for Avalon
     path = os.path.join(REPO_DIR, "bin", "pythonpath")
     os.environ["PYTHONPATH"] += os.pathsep + path
-    sys.path.append(path)
 
     # Override default configuration by setting this value.
     if "AVALON_CONFIG" not in os.environ:

@@ -332,6 +332,11 @@ def main():
     parser.add_argument("--restore",
                         help="Restore a project or a folder or projects.")
     parser.add_argument("--drop", help="Delete database")
+    parser.add_argument(
+        "--terminal",
+        action="store_true",
+        help="Setup Avalon environment in terminal."
+    )
 
     kwargs, args = parser.parse_known_args()
 
@@ -420,6 +425,13 @@ def main():
         returncode = 0
         try:
             drop(kwargs.drop)
+        except Exception:
+            raise
+
+    elif kwargs.terminal:
+        returncode = 0
+        try:
+            subprocess.call(["cmd", "/K"])
         except Exception:
             raise
 

@@ -20,4 +20,4 @@ echo  $ avalon --help
 echo.
 echo.
 
-call cmd /K
+avalon --terminal

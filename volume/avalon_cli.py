@@ -46,6 +46,7 @@ import json
 import time
 import datetime
 import zipfile
+import importlib
 
 import pymongo
 from bson import json_util
@@ -104,7 +105,7 @@ def _install(root=None):
     ]
     for dependency, name in dependencies:
         try:
-            __import__(dependency)
+            importlib.import_module(dependency)
         except ImportError:
             os.environ["PYTHONPATH"] += (
                 os.pathsep + os.path.join(REPO_DIR, "git", name)

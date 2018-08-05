@@ -333,9 +333,9 @@ def main():
                         help="Restore a project or a folder or projects.")
     parser.add_argument("--drop", help="Delete database")
     parser.add_argument(
-        "--terminal",
+        "--environment",
         action="store_true",
-        help="Setup Avalon environment in terminal."
+        help="Print Avalon environment."
     )
 
     kwargs, args = parser.parse_known_args()
@@ -428,10 +428,17 @@ def main():
         except Exception:
             raise
 
-    elif kwargs.terminal:
+    elif kwargs.environment:
         returncode = 0
         try:
-            subprocess.call(["cmd", "/K"])
+            cmd = ""
+            os.environ["AVALON_PYTHONPATH"] = os.environ["PYTHONPATH"]
+            for key, value in os.environ.items():
+                if platform.system().lower() == "windows":
+                    cmd += r"set {0}={1}& ".format(key, value)
+                else:
+                    cmd += r"export {0}={1} && ".format(key, value)
+            print(cmd)
         except Exception:
             raise
 

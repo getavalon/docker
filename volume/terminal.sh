@@ -11,3 +11,7 @@ export PATH=$WORKDIR:$PATH
 
 # Expose cross-platform libraries
 export PYTHONPATH=$WORKDIR/bin/pythonpath:$PYTHONPATH
+
+avalon --environment > tmp.sh
+source tmp.sh
+rm tmp.sh

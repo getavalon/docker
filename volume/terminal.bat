@@ -6,6 +6,10 @@ set PATH=%~dp0;%~dp0bin\windows\python36;%PATH%
 :: Expose cross-platform libraries
 set PYTHONPATH=%~dp0bin\pythonpath;%PYTHONPATH%
 
+call avalon --environment > tmp.bat
+call tmp.bat
+del tmp.bat
+
 cls
 
 echo.
@@ -20,4 +24,4 @@ echo  $ avalon --help
 echo.
 echo.
 
-avalon --terminal
+call cmd /K

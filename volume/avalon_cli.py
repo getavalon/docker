@@ -440,9 +440,9 @@ def main():
 
     elif kwargs.environment:
         returncode = 0
-        environment = get_environment(kwargs.root)
         try:
             cmd = ""
+            environment = get_environment(kwargs.root)
             environment["AVALON_PYTHONPATH"] = environment["PYTHONPATH"]
             for key, value in environment.items():
                 if platform.system().lower() == "windows":

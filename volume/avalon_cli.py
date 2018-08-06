@@ -449,6 +449,13 @@ def main():
                     cmd += r"set {0}={1}& ".format(key, value)
                 else:
                     cmd += r"export {0}={1} && ".format(key, value)
+
+            # Trim command
+            if platform.system().lower() == "windows":
+                cmd = cmd[:-2]
+            else:
+                cmd = cmd[:-4]
+
             print(cmd)
         except Exception:
             raise

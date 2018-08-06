@@ -6,7 +6,6 @@ if [[ -z $WORKDIR ]]; then
 	popd > /dev/null
 fi
 
-export AVALON_MONGO=mongodb://127.0.0.1:27017
 export PATH=$WORKDIR:$PATH
 
 avalon --environment > tmp.sh

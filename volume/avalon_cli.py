@@ -169,6 +169,13 @@ def get_environment(root):
         config = "polly"
         environment["AVALON_CONFIG"] = config
 
+    # AVALON_MONGO
+    path = "mongodb://127.0.0.1:27017"
+    if platform.system().lower() == "windows":
+        path = "mongodb://192.168.99.100:27017"
+
+    environment["AVALON_MONGO"] = os.environ.get("AVALON_MONGO", path)
+
     return environment
 
 

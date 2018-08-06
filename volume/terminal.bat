@@ -1,6 +1,5 @@
 @echo off
 
-set AVALON_MONGO=mongodb://192.168.99.100:27017
 set PATH=%~dp0;%~dp0bin\windows\python36;%PATH%
 
 call avalon --environment > tmp.bat

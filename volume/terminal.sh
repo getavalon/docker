@@ -14,4 +14,5 @@ export PYTHONPATH=$WORKDIR/bin/pythonpath:$PYTHONPATH
 
 avalon --environment > tmp.sh
 source tmp.sh
+cat tmp.sh
 rm tmp.sh

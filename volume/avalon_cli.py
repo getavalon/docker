@@ -48,9 +48,6 @@ import datetime
 import zipfile
 import importlib
 
-import pymongo
-from bson import json_util
-
 REPO_DIR = os.path.dirname(os.path.abspath(__file__))
 AVALON_DEBUG = bool(os.getenv("AVALON_DEBUG"))
 
@@ -240,6 +237,8 @@ def update(cd):
 
 def backup(dst=None):
     """Outputs a zip file of the data in all the projects."""
+    import pymongo
+    from bson import json_util
 
     directory = tempfile.mkdtemp()
 
@@ -270,6 +269,8 @@ def backup(dst=None):
 
 
 def drop(db):
+    import pymongo
+
     client = pymongo.MongoClient(os.environ["AVALON_MONGO"])
     client["avalon"][db].drop()
     print("Successfully dropped %s" % db)
@@ -282,6 +283,9 @@ def restore(zip_path):
         path (str): Path to backup zip files.
 
     """
+    import pymongo
+    from bson import json_util
+
     directory = tempfile.mkdtemp()
 
     # Unzip backup

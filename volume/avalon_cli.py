@@ -88,11 +88,23 @@ def _check_pyqt5():
 
 
 def _install(root=None):
+    for key, value in get_environment(root).items():
+        os.environ[key] = value
+
+    config = os.environ["AVALON_CONFIG"]
+    if subprocess.call([sys.executable, "-c", "import %s" % config]) != 0:
+        print("ERROR: config not found, check your PYTHONPATH.")
+        sys.exit(1)
+
+
+def get_environment(root):
+    environment = {}
+
     # Copy AVALON_PYTHONPATH to PYTHONPATH
-    os.environ["PYTHONPATH"] = os.environ.get("AVALON_PYTHONPATH", "")
+    environment["PYTHONPATH"] = os.environ.get("AVALON_PYTHONPATH", "")
 
     # Need to add all paths from PYTHONPATH to sys.path for import testing
-    for path in os.environ["PYTHONPATH"].split(os.pathsep):
+    for path in environment["PYTHONPATH"].split(os.pathsep):
         sys.path.append(path)
 
     # Adding dependencies from submodules if missing
@@ -107,11 +119,11 @@ def _install(root=None):
         try:
             importlib.import_module(dependency)
         except ImportError:
-            os.environ["PYTHONPATH"] += (
+            environment["PYTHONPATH"] += (
                 os.pathsep + os.path.join(REPO_DIR, "git", name)
             )
 
-    os.environ["PATH"] = os.pathsep.join([
+    environment["PATH"] = os.pathsep.join([
         # Expose "avalon", overriding existing
         os.path.join(REPO_DIR),
 
@@ -126,17 +138,17 @@ def _install(root=None):
 
     # Third-party dependencies for Avalon
     path = os.path.join(REPO_DIR, "bin", "pythonpath")
-    os.environ["PYTHONPATH"] += os.pathsep + path
+    environment["PYTHONPATH"] += os.pathsep + path
 
     # Override default configuration by setting this value.
     if "AVALON_CONFIG" not in os.environ:
-        os.environ["AVALON_CONFIG"] = "polly"
-        os.environ["PYTHONPATH"] += (
+        environment["AVALON_CONFIG"] = "polly"
+        environment["PYTHONPATH"] += (
             os.pathsep + os.path.join(REPO_DIR, "git", "mindbender-config")
         )
 
     if root is not None:
-        os.environ["AVALON_PROJECTS"] = root
+        environment["AVALON_PROJECTS"] = root
     else:
         try:
             root = os.environ["AVALON_PROJECTS"]
@@ -152,17 +164,15 @@ def _install(root=None):
                 ),
                 "projects"
             )
-            os.environ["AVALON_PROJECTS"] = root
+            environment["AVALON_PROJECTS"] = root
 
     try:
         config = os.environ["AVALON_CONFIG"]
     except KeyError:
         config = "polly"
-        os.environ["AVALON_CONFIG"] = config
+        environment["AVALON_CONFIG"] = config
 
-    if subprocess.call([sys.executable, "-c", "import %s" % config]) != 0:
-        print("ERROR: config not found, check your PYTHONPATH.")
-        sys.exit(1)
+    return environment
 
 
 def forward(args, silent=False, cwd=None):
@@ -335,7 +345,7 @@ def main():
     parser.add_argument(
         "--environment",
         action="store_true",
-        help="Print Avalon environment."
+        help="Print Avalon environment command."
     )
 
     kwargs, args = parser.parse_known_args()
@@ -430,10 +440,11 @@ def main():
 
     elif kwargs.environment:
         returncode = 0
+        environment = get_environment(kwargs.root)
         try:
             cmd = ""
-            os.environ["AVALON_PYTHONPATH"] = os.environ["PYTHONPATH"]
-            for key, value in os.environ.items():
+            environment["AVALON_PYTHONPATH"] = environment["PYTHONPATH"]
+            for key, value in environment.items():
                 if platform.system().lower() == "windows":
                     cmd += r"set {0}={1}& ".format(key, value)
                 else:

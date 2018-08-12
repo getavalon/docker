@@ -136,19 +136,21 @@ You can still utilize Avalon-docker for testing by using environment variables t
 
 ```bash
 $ git clone https://github.com/getavalon/core.git avalon-core
-$ set AVALON_CORE=%cd%\avalon-core
+$ set AVALON_PYTHONPATH=%cd%\avalon-core
 $ # Launch Avalon, using this repo for the core
 $ avalon
 ```
 
 The available environment variables are:
 
-| Environment Variable | Description
+| Environment Variable | Description | Default
 |---|---
-| ```AVALON_CORE``` | Override Avalon core module; https://github.com/getavalon/core
-| ```AVALON_LAUNCHER``` | Override Avalon launcher module; https://github.com/getavalon/launcher
-| ```PYBLISH_BASE``` | Override Pyblish base module; https://github.com/pyblish/pyblish-base
-| ```PYBLISH_QML``` | Override Pyblish qml module; https://github.com/pyblish/pyblish-qml
+| ```AVALON_MONGO``` | Path to reach Mongo database. | mongodb://localhost:27017 (Linux) / mongodb://192.168.99.100:27017 (Windows)
+| ```AVALON_DB``` | Database name in Mongo. | avalon
+| ```AVALON_PYTHONPATH```| Override dependency modules. | Path of submodules.
+| ```AVALON_DEBUG```| Enable additional output. | True
+| ```AVALON_CONFIG```| Which Avalon config to use. | polly
+| ```AVALON_EXAMPLES```| Examples repository. | Path of submodule.
 
 #### Testing
 

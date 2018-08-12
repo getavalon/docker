@@ -3,36 +3,35 @@
 This module contains a CLI towards Avalon and all of what
 is bundled together in this distribution.
 
-- https://github.com/getavalon/setup
+- https://github.com/getavalon/docker
 
 dependencies:
     - Python 2.6+ or 3.6+
     - PyQt5
 
 example:
-    $ python avalon.py --help
+    $ avalon --help
 
 overrides:
-    avalon.py takes into account dependencies bundled
+    avalon takes into account dependencies bundled
     together with this distribution, but these can be
     overridden via environment variables.
-
-    Set any of the below to override which path to put
-    on your PYTHONPATH
 
     # Database
     - AVALON_MONGO=mongodb://localhost:27017
     - AVALON_DB=avalon
 
     # Dependencies
-    - PYBLISH_BASE=absolute/path
-    - PYBLISH_QML=absolute/path
-    - AVALON_CORE=absolute/path
-    - AVALON_LAUNCHER=absolute/path
-    - AVALON_EXAMPLES=absolute/path
+    - AVALON_PYTHONPATH=absolute/path
 
     # Enable additional output
     - AVALON_DEBUG=True
+
+    # Which Avalon config to use
+    - AVALON_CONFIG=polly
+
+    # Examples repository
+    - AVALON_EXAMPLES=absolute/path
 
 """
 
@@ -47,9 +46,7 @@ import json
 import time
 import datetime
 import zipfile
-
-import pymongo
-from bson import json_util
+import importlib
 
 REPO_DIR = os.path.dirname(os.path.abspath(__file__))
 AVALON_DEBUG = bool(os.getenv("AVALON_DEBUG"))
@@ -88,16 +85,42 @@ def _check_pyqt5():
 
 
 def _install(root=None):
-    # Enable overriding from local environment
-    for dependency, name in (("PYBLISH_BASE", "pyblish-base"),
-                             ("PYBLISH_QML", "pyblish-qml"),
-                             ("AVALON_CORE", "avalon-core"),
-                             ("AVALON_LAUNCHER", "avalon-launcher"),
-                             ("AVALON_EXAMPLES", "avalon-examples")):
-        if dependency not in os.environ:
-            os.environ[dependency] = os.path.join(REPO_DIR, "git", name)
+    for key, value in get_environment(root).items():
+        os.environ[key] = value
 
-    os.environ["PATH"] = os.pathsep.join([
+    config = os.environ["AVALON_CONFIG"]
+    if subprocess.call([sys.executable, "-c", "import %s" % config]) != 0:
+        print("ERROR: config not found, check your PYTHONPATH.")
+        sys.exit(1)
+
+
+def get_environment(root):
+    environment = {}
+
+    # Copy AVALON_PYTHONPATH to PYTHONPATH
+    environment["PYTHONPATH"] = os.environ.get("AVALON_PYTHONPATH", "")
+
+    # Need to add all paths from PYTHONPATH to sys.path for import testing
+    for path in environment["PYTHONPATH"].split(os.pathsep):
+        sys.path.append(path)
+
+    # Adding dependencies from submodules if missing
+    dependencies = [
+        ("pyblish", "pyblish-base"),
+        ("pyblish_qml", "pyblish-qml"),
+        ("avalon", "avalon-core"),
+        ("launcher", "avalon-launcher"),
+        ("gazu", "cgwire-gazu")
+    ]
+    for dependency, name in dependencies:
+        try:
+            importlib.import_module(dependency)
+        except ImportError:
+            environment["PYTHONPATH"] += (
+                os.pathsep + os.path.join(REPO_DIR, "git", name)
+            )
+
+    environment["PATH"] = os.pathsep.join([
         # Expose "avalon", overriding existing
         os.path.join(REPO_DIR),
 
@@ -110,46 +133,50 @@ def _install(root=None):
         os.path.join(REPO_DIR, "bin", platform.system().lower()),
     ])
 
-    os.environ["PYTHONPATH"] = os.pathsep.join(
-        # Append to PYTHONPATH
-        os.getenv("PYTHONPATH", "").split(os.pathsep) + [
-            # Third-party dependencies for Avalon
-            os.path.join(REPO_DIR, "bin", "pythonpath"),
-
-            # Default config and dependency
-            os.getenv("PYBLISH_BASE"),
-            os.getenv("PYBLISH_QML"),
-
-            # The Launcher itself
-            os.getenv("AVALON_LAUNCHER"),
-            os.getenv("AVALON_CORE"),
-        ]
-    )
+    # Third-party dependencies for Avalon
+    path = os.path.join(REPO_DIR, "bin", "pythonpath")
+    environment["PYTHONPATH"] += os.pathsep + path
 
     # Override default configuration by setting this value.
     if "AVALON_CONFIG" not in os.environ:
-        os.environ["AVALON_CONFIG"] = "polly"
-        os.environ["PYTHONPATH"] += os.pathsep + os.path.join(
-            REPO_DIR, "git", "mindbender-config")
+        environment["AVALON_CONFIG"] = "polly"
+        environment["PYTHONPATH"] += (
+            os.pathsep + os.path.join(REPO_DIR, "git", "mindbender-config")
+        )
 
     if root is not None:
-        os.environ["AVALON_PROJECTS"] = root
+        environment["AVALON_PROJECTS"] = root
     else:
         try:
             root = os.environ["AVALON_PROJECTS"]
         except KeyError:
-            root = os.path.join(os.environ["AVALON_EXAMPLES"], "projects")
-            os.environ["AVALON_PROJECTS"] = root
+            root = os.path.join(
+                os.getenv(
+                    "AVALON_EXAMPLES",
+                    os.path.join(
+                        os.path.dirname(os.path.abspath(__file__)),
+                        "git",
+                        "avalon-examples"
+                    )
+                ),
+                "projects"
+            )
+            environment["AVALON_PROJECTS"] = root
 
     try:
         config = os.environ["AVALON_CONFIG"]
     except KeyError:
         config = "polly"
-        os.environ["AVALON_CONFIG"] = config
+        environment["AVALON_CONFIG"] = config
 
-    if subprocess.call([sys.executable, "-c", "import %s" % config]) != 0:
-        print("ERROR: config not found, check your PYTHONPATH.")
-        sys.exit(1)
+    # AVALON_MONGO
+    path = "mongodb://127.0.0.1:27017"
+    if platform.system().lower() == "windows":
+        path = "mongodb://192.168.99.100:27017"
+
+    environment["AVALON_MONGO"] = os.environ.get("AVALON_MONGO", path)
+
+    return environment
 
 
 def forward(args, silent=False, cwd=None):
@@ -217,6 +244,8 @@ def update(cd):
 
 def backup(dst=None):
     """Outputs a zip file of the data in all the projects."""
+    import pymongo
+    from bson import json_util
 
     directory = tempfile.mkdtemp()
 
@@ -247,6 +276,8 @@ def backup(dst=None):
 
 
 def drop(db):
+    import pymongo
+
     client = pymongo.MongoClient(os.environ["AVALON_MONGO"])
     client["avalon"][db].drop()
     print("Successfully dropped %s" % db)
@@ -259,6 +290,9 @@ def restore(zip_path):
         path (str): Path to backup zip files.
 
     """
+    import pymongo
+    from bson import json_util
+
     directory = tempfile.mkdtemp()
 
     # Unzip backup
@@ -319,6 +353,11 @@ def main():
     parser.add_argument("--restore",
                         help="Restore a project or a folder or projects.")
     parser.add_argument("--drop", help="Delete database")
+    parser.add_argument(
+        "--environment",
+        action="store_true",
+        help="Print Avalon environment command."
+    )
 
     kwargs, args = parser.parse_known_args()
 
@@ -407,6 +446,28 @@ def main():
         returncode = 0
         try:
             drop(kwargs.drop)
+        except Exception:
+            raise
+
+    elif kwargs.environment:
+        returncode = 0
+        try:
+            cmd = ""
+            environment = get_environment(kwargs.root)
+            environment["AVALON_PYTHONPATH"] = environment["PYTHONPATH"]
+            for key, value in environment.items():
+                if platform.system().lower() == "windows":
+                    cmd += r"set {0}={1}& ".format(key, value)
+                else:
+                    cmd += r"export {0}={1} && ".format(key, value)
+
+            # Trim command
+            if platform.system().lower() == "windows":
+                cmd = cmd[:-2]
+            else:
+                cmd = cmd[:-4]
+
+            print(cmd)
         except Exception:
             raise
 

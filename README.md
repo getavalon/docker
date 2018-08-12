@@ -144,7 +144,7 @@ $ avalon
 The available environment variables are:
 
 | Environment Variable | Description | Default
-|---|---
+|---|---|---
 | ```AVALON_MONGO``` | Path to reach Mongo database. | mongodb://localhost:27017 (Linux) / mongodb://192.168.99.100:27017 (Windows)
 | ```AVALON_DB``` | Database name in Mongo. | avalon
 | ```AVALON_PYTHONPATH```| Override dependency modules. | Path of submodules.

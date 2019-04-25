@@ -128,7 +128,9 @@ def main():
     os.environ["AVALON_ASSET"] = "bruce"
     os.environ["AVALON_SILO"] = "assets"
     os.environ["AVALON_CONFIG"] = "polly"
-    os.environ["AVALON_MONGO"] = "mongodb://192.168.99.100:27017"
+    os.environ["AVALON_MONGO"] = os.environ.get(
+        "AVALON_MONGO", "mongodb://127.0.0.1:27017"
+    )
 
     print("Fetching Avalon data..")
     avalon.install()
@@ -224,8 +226,8 @@ if __name__ == '__main__':
     import time
 
     print("Logging in..")
-    gazu.client.set_host("http://192.168.99.100/api")
-    gazu.log_in("admin@example.com", "default")
+    gazu.client.set_host("http://127.0.0.1/api")
+    gazu.log_in("admin@example.com", "mysecretpassword")
     print("Logged in..")
 
     while True:

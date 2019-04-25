@@ -4,6 +4,11 @@ import gazu
 from avalon import io as avalon
 
 
+def get_consistent_name(name):
+    """Converts potentially inconsistent names."""
+    return name.replace(" ", "_").lower()
+
+
 def main():
     projects = {}
     objects = {}
@@ -11,8 +16,11 @@ def main():
     tasks = [{"name": task["name"]} for task in gazu.task.all_task_types()]
 
     for project in gazu.project.all_projects():
-        # Remove spaces for compatibility, lowercase for consistentcy
-        project_name = project["name"].replace(" ", "_").lower()
+        # Ensure project["code"] consistentcy.
+        if project["code"] != get_consistent_name(project["name"]):
+            project = gazu.project.update_project_data(
+                project, {"code": get_consistent_name(project["name"])}
+            )
 
         assets = gazu.asset.all_assets_for_project(project)
         episodes = []
@@ -51,14 +59,13 @@ def main():
                 entity_type = gazu.entity.get_entity_type(
                     asset["entity_type_id"]
                 )
-                # Remove spaces for compatibility, lowercase for consistentcy
-                name = asset["name"].replace(" ", "_").lower()
+
                 data = {
                     "schema": "avalon-core:asset-2.0",
-                    "name": name,
+                    "name": get_consistent_name(asset["name"]),
                     "silo": silo,
                     "type": "asset",
-                    "parent": project_name,
+                    "parent": project["code"],
                     "data": {
                         "label": asset.get("label", asset["name"]),
                         "group": entity_type["name"]
@@ -73,16 +80,16 @@ def main():
                         task["task_type_name"] for task in asset["tasks"]
                     ]
 
-                entities[name] = data
+                entities[data["name"]] = data
 
                 objects_count += 1
 
-        objects[project_name] = entities
+        objects[project["code"]] = entities
 
-        projects[project_name] = {
+        projects[project["code"]] = {
             "schema": "avalon-core:project-2.0",
             "type": "project",
-            "name": project_name,
+            "name": project["code"],
             "data": {
                 "label": project["name"]
             },
@@ -180,22 +187,23 @@ def main():
 
         avalon.insert_one(project)
 
-    for project_name, assets in objects.items():
-        os.environ["AVALON_PROJECT"] = project_name
+    for project["code"], assets in objects.items():
+        os.environ["AVALON_PROJECT"] = project["code"]
         avalon.uninstall()
         avalon.install()
 
         for asset_name, asset in assets.items():
-            if asset_name in existing_objects.get(project_name, {}):
+            if asset_name in existing_objects.get(project["code"], {}):
                 # Update tasks
                 if asset["data"].get("tasks"):
-                    existing_asset = existing_objects[project_name][asset_name]
+                    existing_project = existing_objects[project["code"]]
+                    existing_asset = existing_project[asset_name]
                     existing_tasks = existing_asset["data"].get("tasks", [])
                     if existing_tasks != asset["data"]["tasks"]:
                         tasks = asset["data"]["tasks"]
                         print(
                             "Updating tasks on \"{0} / {1}\" to:\n{2}".format(
-                                project_name, asset_name, tasks
+                                project["code"], asset_name, tasks
                             )
                         )
                         existing_asset["data"]["tasks"] = tasks
@@ -214,7 +222,7 @@ def main():
                 )["_id"]
             print(
                 "Installing asset: \"{0} / {1}\"".format(
-                    project_name, asset_name
+                    project["code"], asset_name
                 )
             )
             avalon.insert_one(asset)

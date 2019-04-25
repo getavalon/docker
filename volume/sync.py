@@ -22,26 +22,42 @@ def main():
                 project, {"code": get_consistent_name(project["name"])}
             )
 
-        assets = gazu.asset.all_assets_for_project(project)
+        # Collect assets.
+        assets = []
+        for asset in gazu.asset.all_assets_for_project(project):
+            # Faking a parent for better hierarchy structure, until folders are
+            # supported in Kitsu.
+            asset["parents"] = ["assets"]
+            assets.append(asset)
+
+        # Collect shots and parents.
         episodes = []
         sequences = []
         shots = []
         for episode in gazu.shot.all_episodes_for_project(project):
+            episode["code"] = get_consistent_name(episode["name"])
             episode["parent"] = project
+            # Faking a parent for better hierarchy structure, until folders are
+            # supported in Kitsu.
+            episode["parents"] = ["episodes"]
             episodes.append(episode)
             for sequence in gazu.shot.all_sequences_for_episode(episode):
+                sequence["code"] = get_consistent_name(sequence["name"])
                 sequence["parent"] = episode
+                sequence["parents"] = episode["parents"] + [episode["code"]]
                 sequence["label"] = sequence["name"]
                 sequence["name"] = "{0}_{1}".format(
-                    episode["name"], sequence["name"]
+                    episode["code"], sequence["code"]
                 )
                 sequence["visualParent"] = episode["name"]
                 sequences.append(sequence)
                 for shot in gazu.shot.all_shots_for_sequence(sequence):
+                    shot["code"] = get_consistent_name(shot["name"])
                     shot["parent"] = sequence
+                    shot["parents"] = sequence["parents"] + [sequence["code"]]
                     shot["label"] = shot["name"]
-                    shot["name"] = "{0}_{1}".format(
-                        sequence["name"], shot["name"]
+                    shot["name"] = "{0}_{1}_{2}".format(
+                        episode["code"], sequence["code"], shot["code"]
                     )
                     shot["visualParent"] = sequence["name"]
                     shot["tasks"] = gazu.task.all_tasks_for_shot(shot)
@@ -68,7 +84,8 @@ def main():
                     "parent": project["code"],
                     "data": {
                         "label": asset.get("label", asset["name"]),
-                        "group": entity_type["name"]
+                        "group": entity_type["name"],
+                        "parents": asset["parents"]
                     }
                 }
 

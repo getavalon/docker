@@ -108,7 +108,8 @@ def main():
             "type": "project",
             "name": project["code"],
             "data": {
-                "label": project["name"]
+                "label": project["name"],
+                "code": project["code"]
             },
             "parent": None,
             "config": {

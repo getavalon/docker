@@ -34,7 +34,7 @@ def main():
         episodes = []
         sequences = []
         shots = []
-        for episode in gazu.shot.all_episodes_for_project(project):
+        for episode in (gazu.shot.all_episodes_for_project(project) or []):
             episode["code"] = get_consistent_name(episode["name"])
             episode["parent"] = project
             # Faking a parent for better hierarchy structure, until folders are

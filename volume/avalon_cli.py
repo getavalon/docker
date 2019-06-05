@@ -346,7 +346,7 @@ def main():
     parser.add_argument("--publish", action="store_true",
                         help="Publish from current working directory, "
                              "or supplied --root")
-    parser.add_argument("--backup", nargs='?',
+    parser.add_argument("--backup", nargs='?', default=False,
                         help="Create a backup in current working directory.")
     parser.add_argument("--restore",
                         help="Restore a project or a folder or projects.")
@@ -360,6 +360,12 @@ def main():
     kwargs, args = parser.parse_known_args()
 
     _install(root=kwargs.root)
+
+    for key, value in get_environment(kwargs.root).items():
+        os.environ[key] = value
+
+    for path in get_environment(kwargs.root)["PYTHONPATH"].split(os.pathsep):
+        sys.path.append(path)
 
     cd = os.path.dirname(os.path.abspath(__file__))
     examplesdir = os.getenv("AVALON_EXAMPLES",
@@ -430,6 +436,13 @@ def main():
         returncode = 0
         try:
             backup(kwargs.backup)
+        except Exception:
+            raise
+
+    elif kwargs.backup is None:
+        returncode = 0
+        try:
+            backup()
         except Exception:
             raise
 

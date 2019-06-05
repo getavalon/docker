@@ -85,12 +85,24 @@ def _check_pyqt5():
 
 
 def _install(root=None):
-    for key, value in get_environment(root).items():
+    environment = get_environment(root)
+
+    for key, value in environment.items():
         os.environ[key] = value
 
+    for path in environment["PYTHONPATH"].split(os.pathsep):
+        sys.path.append(path)
+
     config = os.environ["AVALON_CONFIG"]
-    if subprocess.call([sys.executable, "-c", "import %s" % config]) != 0:
-        print("ERROR: config not found, check your PYTHONPATH.")
+    try:
+        importlib.import_module(config)
+    except ImportError:
+        print(
+            "ERROR: config \"{0}\" not found, "
+            "check your PYTHONPATH:\n{1}".format(
+                config, os.environ["PYTHONPATH"]
+            )
+        )
         sys.exit(1)
 
 
@@ -162,12 +174,6 @@ def get_environment(root):
                 "projects"
             )
             environment["AVALON_PROJECTS"] = root
-
-    try:
-        config = os.environ["AVALON_CONFIG"]
-    except KeyError:
-        config = "polly"
-        environment["AVALON_CONFIG"] = config
 
     # AVALON_MONGO
     environment["AVALON_MONGO"] = os.environ.get(
@@ -360,12 +366,6 @@ def main():
     kwargs, args = parser.parse_known_args()
 
     _install(root=kwargs.root)
-
-    for key, value in get_environment(kwargs.root).items():
-        os.environ[key] = value
-
-    for path in get_environment(kwargs.root)["PYTHONPATH"].split(os.pathsep):
-        sys.path.append(path)
 
     cd = os.path.dirname(os.path.abspath(__file__))
     examplesdir = os.getenv("AVALON_EXAMPLES",

@@ -16,11 +16,14 @@ def main():
     tasks = [{"name": task["name"]} for task in gazu.task.all_task_types()]
 
     for project in gazu.project.all_projects():
-        # Ensure project["code"] consistentcy.
-        if project["code"] != get_consistent_name(project["name"]):
-            project = gazu.project.update_project_data(
-                project, {"code": get_consistent_name(project["name"])}
-            )
+        # Ensure project["code"] consistency.
+        project_name = get_consistent_name(project["name"])
+        if project["code"] != project_name:
+            proj = {}
+            proj["code"] = project_name
+            proj["id"] = project["id"]
+            project = gazu.project.update_project(proj)
+            print("Updating Project Code...")
 
         # Collect assets.
         assets = []

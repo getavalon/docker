@@ -136,13 +136,14 @@ def get_environment(root):
         # Expose "avalon", overriding existing
         os.path.join(REPO_DIR),
 
-        os.environ["PATH"],
-
         # Add generic binaries
         os.path.join(REPO_DIR, "bin"),
 
         # Add OS-level dependencies
         os.path.join(REPO_DIR, "bin", platform.system().lower()),
+        os.path.join(REPO_DIR, "bin", platform.system().lower(), "python36"),
+
+        os.environ["PATH"],
     ])
 
     # Third-party dependencies for Avalon
@@ -365,7 +366,8 @@ def main():
 
     kwargs, args = parser.parse_known_args()
 
-    _install(root=kwargs.root)
+    if not kwargs.environment:
+        _install(root=kwargs.root)
 
     cd = os.path.dirname(os.path.abspath(__file__))
     examplesdir = os.getenv("AVALON_EXAMPLES",

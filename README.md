@@ -4,8 +4,6 @@
 
 Avalon on Docker, ideal for beginners and studios alike.
 
-> NOTE: This currently *only* works on [Docker Toolbox](https://github.com/docker/toolbox#installation-and-documentation), *not* Docker for Windows
-
 <br>
 
 ### Usage on Windows
@@ -120,7 +118,7 @@ See the [Usage](#usage) instructions, though you may want to remove `-d` and `-t
 
 #### Override modules
 
-When developing on individual repositories like Avalon-core or Avalon-launcher, it can be useful to have separate repositories from the submodules of Avalon-docker.  
+When developing on individual repositories like Avalon-core or Avalon-launcher, it can be useful to have separate repositories for the submodules of Avalon-docker.  
 You can still utilize Avalon-docker for testing by using environment variables to override where Avalon-docker looks for the modules.
 
 ```bash

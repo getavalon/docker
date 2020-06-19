@@ -85,12 +85,24 @@ def _check_pyqt5():
 
 
 def _install(root=None):
-    for key, value in get_environment(root).items():
+    environment = get_environment(root)
+
+    for key, value in environment.items():
         os.environ[key] = value
 
+    for path in environment["PYTHONPATH"].split(os.pathsep):
+        sys.path.append(path)
+
     config = os.environ["AVALON_CONFIG"]
-    if subprocess.call([sys.executable, "-c", "import %s" % config]) != 0:
-        print("ERROR: config not found, check your PYTHONPATH.")
+    try:
+        importlib.import_module(config)
+    except ImportError:
+        print(
+            "ERROR: config \"{0}\" not found, "
+            "check your PYTHONPATH:\n{1}".format(
+                config, os.environ["PYTHONPATH"]
+            )
+        )
         sys.exit(1)
 
 
@@ -124,13 +136,14 @@ def get_environment(root):
         # Expose "avalon", overriding existing
         os.path.join(REPO_DIR),
 
-        os.environ["PATH"],
-
         # Add generic binaries
         os.path.join(REPO_DIR, "bin"),
 
         # Add OS-level dependencies
         os.path.join(REPO_DIR, "bin", platform.system().lower()),
+        os.path.join(REPO_DIR, "bin", platform.system().lower(), "python36"),
+
+        os.environ["PATH"],
     ])
 
     # Third-party dependencies for Avalon
@@ -163,18 +176,10 @@ def get_environment(root):
             )
             environment["AVALON_PROJECTS"] = root
 
-    try:
-        config = os.environ["AVALON_CONFIG"]
-    except KeyError:
-        config = "polly"
-        environment["AVALON_CONFIG"] = config
-
     # AVALON_MONGO
-    path = "mongodb://127.0.0.1:27017"
-    if platform.system().lower() == "windows":
-        path = "mongodb://192.168.99.100:27017"
-
-    environment["AVALON_MONGO"] = os.environ.get("AVALON_MONGO", path)
+    environment["AVALON_MONGO"] = os.environ.get(
+        "AVALON_MONGO", "mongodb://127.0.0.1:27017"
+    )
 
     return environment
 
@@ -348,7 +353,7 @@ def main():
     parser.add_argument("--publish", action="store_true",
                         help="Publish from current working directory, "
                              "or supplied --root")
-    parser.add_argument("--backup", nargs='?',
+    parser.add_argument("--backup", nargs='?', default=False,
                         help="Create a backup in current working directory.")
     parser.add_argument("--restore",
                         help="Restore a project or a folder or projects.")
@@ -361,7 +366,8 @@ def main():
 
     kwargs, args = parser.parse_known_args()
 
-    _install(root=kwargs.root)
+    if not kwargs.environment:
+        _install(root=kwargs.root)
 
     cd = os.path.dirname(os.path.abspath(__file__))
     examplesdir = os.getenv("AVALON_EXAMPLES",
@@ -432,6 +438,13 @@ def main():
         returncode = 0
         try:
             backup(kwargs.backup)
+        except Exception:
+            raise
+
+    elif kwargs.backup is None:
+        returncode = 0
+        try:
+            backup()
         except Exception:
             raise
 

@@ -4,8 +4,6 @@
 
 Avalon on Docker, ideal for beginners and studios alike.
 
-> NOTE: This currently *only* works on [Docker Toolbox](https://github.com/docker/toolbox#installation-and-documentation), *not* Docker for Windows
-
 <br>
 
 ### Usage on Windows
@@ -22,20 +20,9 @@ With Docker available on your system, copy/paste the following commands into Doc
 
 ```bash
 # From Docker Quickstart
-docker run --name avalon-files -d --rm \
-    -p 445:445 \
-    avalon/files \
-    -s "Avalon;/avalon;yes;yes;yes;all;none;all" \
-    -u "avalon;default"
-docker run --name avalon-database -d --rm \
-    -v avalon-database:/data/db \
-    -p 27017:27017 \
-    avalon/database
-docker run --name avalon-tracker -d --rm \
-    -v avalon-tracker:/var/lib/postgresql \
-    -v avalon-tracker:/opt/zou/zou/thumbnails \
-    -p 80:80 \
-    avalon/tracker
+docker run --name avalon-files -d --rm -p 445:445 avalon/files -s "Avalon;/avalon;yes;yes;yes;all;none;all" -u "avalon;default"
+docker run --name avalon-database -d --rm -v avalon-database:/data/db -p 27017:27017 avalon/database
+docker run --name avalon-tracker -d --rm -v avalon-tracker:/var/lib/postgresql -v avalon-tracker:/opt/zou/zou/thumbnails -p 80:80 avalon/tracker
 ```
 
 Finally, from `cmd.exe` run the following to map Avalon files to a drive, such as `A:\`
@@ -131,7 +118,7 @@ See the [Usage](#usage) instructions, though you may want to remove `-d` and `-t
 
 #### Override modules
 
-When developing on individual repositories like Avalon-core or Avalon-launcher, it can be useful to have separate repositories from the submodules of Avalon-docker.  
+When developing on individual repositories like Avalon-core or Avalon-launcher, it can be useful to have separate repositories for the submodules of Avalon-docker.  
 You can still utilize Avalon-docker for testing by using environment variables to override where Avalon-docker looks for the modules.
 
 ```bash

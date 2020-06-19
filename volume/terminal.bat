@@ -1,6 +1,6 @@
 @echo off
 
-set PATH=%~dp0;%~dp0bin\windows\python36;%PATH%
+set PATH=%~dp0;%PATH%
 
 call avalon --environment > tmp.bat
 call tmp.bat

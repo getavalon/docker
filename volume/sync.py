@@ -4,6 +4,11 @@ import gazu
 from avalon import io as avalon
 
 
+def get_consistent_name(name):
+    """Converts potentially inconsistent names."""
+    return name.replace(" ", "_").lower()
+
+
 def main():
     projects = {}
     objects = {}
@@ -11,29 +16,51 @@ def main():
     tasks = [{"name": task["name"]} for task in gazu.task.all_task_types()]
 
     for project in gazu.project.all_projects():
-        # Remove spaces for compatibility, lowercase for consistentcy
-        project_name = project["name"].replace(" ", "_").lower()
+        # Ensure project["code"] consistency.
+        project_name = get_consistent_name(project["name"])
+        if project["code"] != project_name:
+            proj = {}
+            proj["code"] = project_name
+            proj["id"] = project["id"]
+            project = gazu.project.update_project(proj)
+            print("Updating Project Code...")
 
-        assets = gazu.asset.all_assets_for_project(project)
+        # Collect assets.
+        assets = []
+        for asset in gazu.asset.all_assets_for_project(project):
+            # Faking a parent for better hierarchy structure, until folders are
+            # supported in Kitsu.
+            asset["parents"] = ["assets"]
+            assets.append(asset)
+
+        # Collect shots and parents.
         episodes = []
         sequences = []
         shots = []
-        for episode in gazu.shot.all_episodes_for_project(project):
+        for episode in (gazu.shot.all_episodes_for_project(project) or []):
+            episode["code"] = get_consistent_name(episode["name"])
             episode["parent"] = project
+            # Faking a parent for better hierarchy structure, until folders are
+            # supported in Kitsu.
+            episode["parents"] = ["episodes"]
             episodes.append(episode)
             for sequence in gazu.shot.all_sequences_for_episode(episode):
+                sequence["code"] = get_consistent_name(sequence["name"])
                 sequence["parent"] = episode
+                sequence["parents"] = episode["parents"] + [episode["code"]]
                 sequence["label"] = sequence["name"]
                 sequence["name"] = "{0}_{1}".format(
-                    episode["name"], sequence["name"]
+                    episode["code"], sequence["code"]
                 )
                 sequence["visualParent"] = episode["name"]
                 sequences.append(sequence)
                 for shot in gazu.shot.all_shots_for_sequence(sequence):
+                    shot["code"] = get_consistent_name(shot["name"])
                     shot["parent"] = sequence
+                    shot["parents"] = sequence["parents"] + [sequence["code"]]
                     shot["label"] = shot["name"]
-                    shot["name"] = "{0}_{1}".format(
-                        sequence["name"], shot["name"]
+                    shot["name"] = "{0}_{1}_{2}".format(
+                        episode["code"], sequence["code"], shot["code"]
                     )
                     shot["visualParent"] = sequence["name"]
                     shot["tasks"] = gazu.task.all_tasks_for_shot(shot)
@@ -51,17 +78,17 @@ def main():
                 entity_type = gazu.entity.get_entity_type(
                     asset["entity_type_id"]
                 )
-                # Remove spaces for compatibility, lowercase for consistentcy
-                name = asset["name"].replace(" ", "_").lower()
+
                 data = {
                     "schema": "avalon-core:asset-2.0",
-                    "name": name,
+                    "name": get_consistent_name(asset["name"]),
                     "silo": silo,
                     "type": "asset",
-                    "parent": project_name,
+                    "parent": project["code"],
                     "data": {
                         "label": asset.get("label", asset["name"]),
-                        "group": entity_type["name"]
+                        "group": entity_type["name"],
+                        "parents": asset["parents"]
                     }
                 }
 
@@ -73,18 +100,19 @@ def main():
                         task["task_type_name"] for task in asset["tasks"]
                     ]
 
-                entities[name] = data
+                entities[data["name"]] = data
 
                 objects_count += 1
 
-        objects[project_name] = entities
+        objects[project["code"]] = entities
 
-        projects[project_name] = {
+        projects[project["code"]] = {
             "schema": "avalon-core:project-2.0",
             "type": "project",
-            "name": project_name,
+            "name": project["code"],
             "data": {
-                "label": project["name"]
+                "label": project["name"],
+                "code": project["code"]
             },
             "parent": None,
             "config": {
@@ -128,7 +156,9 @@ def main():
     os.environ["AVALON_ASSET"] = "bruce"
     os.environ["AVALON_SILO"] = "assets"
     os.environ["AVALON_CONFIG"] = "polly"
-    os.environ["AVALON_MONGO"] = "mongodb://192.168.99.100:27017"
+    os.environ["AVALON_MONGO"] = os.environ.get(
+        "AVALON_MONGO", "mongodb://127.0.0.1:27017"
+    )
 
     print("Fetching Avalon data..")
     avalon.install()
@@ -178,22 +208,23 @@ def main():
 
         avalon.insert_one(project)
 
-    for project_name, assets in objects.items():
-        os.environ["AVALON_PROJECT"] = project_name
+    for project["code"], assets in objects.items():
+        os.environ["AVALON_PROJECT"] = project["code"]
         avalon.uninstall()
         avalon.install()
 
         for asset_name, asset in assets.items():
-            if asset_name in existing_objects.get(project_name, {}):
+            if asset_name in existing_objects.get(project["code"], {}):
                 # Update tasks
                 if asset["data"].get("tasks"):
-                    existing_asset = existing_objects[project_name][asset_name]
+                    existing_project = existing_objects[project["code"]]
+                    existing_asset = existing_project[asset_name]
                     existing_tasks = existing_asset["data"].get("tasks", [])
                     if existing_tasks != asset["data"]["tasks"]:
                         tasks = asset["data"]["tasks"]
                         print(
                             "Updating tasks on \"{0} / {1}\" to:\n{2}".format(
-                                project_name, asset_name, tasks
+                                project["code"], asset_name, tasks
                             )
                         )
                         existing_asset["data"]["tasks"] = tasks
@@ -212,7 +243,7 @@ def main():
                 )["_id"]
             print(
                 "Installing asset: \"{0} / {1}\"".format(
-                    project_name, asset_name
+                    project["code"], asset_name
                 )
             )
             avalon.insert_one(asset)
@@ -224,8 +255,8 @@ if __name__ == '__main__':
     import time
 
     print("Logging in..")
-    gazu.client.set_host("http://192.168.99.100/api")
-    gazu.log_in("admin@example.com", "default")
+    gazu.client.set_host("http://127.0.0.1/api")
+    gazu.log_in("admin@example.com", "mysecretpassword")
     print("Logged in..")
 
     while True:
